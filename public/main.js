@@ -65,6 +65,7 @@ new Vue({
   data: {
     socket: io(),
     room: false,
+    name: ''
   },
   methods: {
     toggleView() {
@@ -75,5 +76,9 @@ new Vue({
     currentView() {
       return this.room ? ChatComponent : RoomComponent;
     }
+  },
+  created() {
+    this.name = prompt('What is your name?');
+    this.socket.emit('*name', name);
   }
 });

@@ -11,6 +11,28 @@ let Room = function(name, key) {
   // set name and key
   this.name = name.trim().toLowerCase();
   this.key = key;
+  this.members = [];
+
+  // methods
+  this.addMember = function(sid, key) {
+
+    // make sure not in another room
+    let memberFound = false;
+    rooms.forEach(room => {
+      if(room.members.indexOf(sid) !== -1) memberFound = true;
+    })
+    if(memberFound) return false;
+    
+    // make sure key matches
+    if(key == this.key) {
+      io.sockets.sockets[sid].data.room = this.name;
+      io.sockets.sockets[sid].join(this.name);
+      this.members.push(sid);
+      return true;
+    } else {
+      return false;
+    }
+  };
 
   // check for duplicate name or invalid name/key length
   // if invalid, return false
@@ -24,6 +46,12 @@ let Room = function(name, key) {
 
 // socket.io
 io.on('connect', socket => {
+
+  // custom data in socket.data
+  socket.data = {};
+
+  // set name
+  socket.on('*name', name => socket.data.name = name);
  
   // rooms getter
   socket.on('_rooms', () => socket.emit('_rooms', roomNames));
@@ -35,7 +63,8 @@ io.on('connect', socket => {
     if(newRoom) {
       rooms.push(newRoom);
       roomNames.push(newRoom.name);
-      socket.join(newRoom.name);
+      newRoom.addMember(socket.id, key);
+      console.log(rooms);
       io.sockets.emit('_rooms', roomNames);
       cb(true);
     }

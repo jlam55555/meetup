@@ -1,12 +1,12 @@
-// component to get into a room
-let RoomComponent = {
+// component to get into a channel
+let ChannelComponent = {
   template: `<div id='#container'>
-  <h3>Join / Create a room</h3>
-  <input type='text' placeholder='room name' v-model='roomName' /><br>
-  <input type='text' placeholder='room key' v-model='roomKey' /><br>
-  <button @click='joinRoom'>Join Room</button><br>
-  <button @click='createRoom'>Create Room</button>
-  <div v-for='room in rooms'>{{ room }}</div>
+  <h3>Join / Create a channel</h3>
+  <input type='text' placeholder='channel name' v-model='channelName' /><br>
+  <input type='text' placeholder='channel key' v-model='channelKey' /><br>
+  <button @click='joinChannel'>Join Channel</button><br>
+  <button @click='createChannel'>Create Channel</button>
+  <div v-for='channel in channels'>{{ channel }}</div>
   <div v-if='error'>{{ error }}</div>
 </div>`,
   props: {
@@ -14,48 +14,73 @@ let RoomComponent = {
   },
   data() {
     return {
-      rooms: [],
-      roomName: '',
-      roomKey: '',
+      channels: [],
+      channelName: '',
+      channelKey: '',
       error: ''
     };
   },
   methods: {
-    joinRoom() {
-      this.$emit('toggle-view');
-    },
-    createRoom() {
-      this.socket.emit('createRoom', this.roomName, this.roomKey, success => {
+    joinChannel() {
+      this.socket.emit('joinChannel', this.channelName, this.channelKey, success => {
+        console.log('test');
         if(success) {
-          this.roomName = '';
-          this.roomKey = '';
+          this.channelName = '';
+          this.channelKey = '';
           this.error = '';
           this.$emit('toggle-view');
         } else {
-          this.error = 'Error creating room: Room name must be between 3 and 50 characters (not including leading/trailing spaces). Room key must be between 3 and 50 characters. Room names must be unique (case doesn\'t matter).';
+          this.error = 'Error joining channel: Channel doesn\'t exist, key is incorrect, or you are already in a channel.';
+        }
+      });
+    },
+    createChannel() {
+      this.socket.emit('createChannel', this.channelName, this.channelKey, success => {
+        if(success) {
+          this.channelName = '';
+          this.channelKey = '';
+          this.error = '';
+          this.$emit('toggle-view');
+        } else {
+          this.error = 'Error creating channel: Channel name must be between 3 and 50 characters (not including leading/trailing spaces). Channel key must be between 3 and 50 characters. Channel names must be unique (case doesn\'t matter).';
         }
       });
     }
   },
   // set socket.io listeners
   created() {
-    // get initial list of rooms
-    this.socket.emit('_rooms');
+    // get initial list of channels
+    this.socket.emit('_channels');
 
-    // on room update, update list
-    this.socket.on('_rooms', _rooms => this.rooms = _rooms);
+    // on channel update, update list
+    this.socket.on('_channels', _channels => this.channels = _channels);
   }
 };
 
-// component when in room
+// component when in channel
 let ChatComponent = {
   template: `<div id='container'>
-  <div><button @click='leaveRoom'>Leave room</button></div>
+  <div v-for='member of members'>{{ member.name }}</div>
+  <div><button @click='leaveChannel'>Leave channel</button></div>
 </div>`,
+  data() {
+    return {
+      members: []
+    };
+  },
+  props: {
+    socket: Object
+  },
   methods: {
-    leaveRoom() {
+    leaveChannel() {
+      this.socket.emit('leaveChannel');
       this.$emit('toggle-view');
     }
+  },
+  // set up members and socket handlers
+  created() {
+    this.socket.emit('_members');
+    this.socket.on('_members', _members => this.members = _members);
   }
 };
 
@@ -64,21 +89,21 @@ new Vue({
   el: '#app',
   data: {
     socket: io(),
-    room: false,
+    channel: false,
     name: ''
   },
   methods: {
     toggleView() {
-      this.room = !this.room
+      this.channel = !this.channel
     }
   },
   computed: {
     currentView() {
-      return this.room ? ChatComponent : RoomComponent;
+      return this.channel ? ChatComponent : ChannelComponent;
     }
   },
   created() {
     this.name = prompt('What is your name?');
-    this.socket.emit('*name', name);
+    this.socket.emit('*name', this.name);
   }
 });

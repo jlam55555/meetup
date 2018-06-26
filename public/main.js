@@ -23,7 +23,6 @@ let ChannelComponent = {
   methods: {
     joinChannel() {
       this.socket.emit('joinChannel', this.channelName, this.channelKey, success => {
-        console.log('test');
         if(success) {
           this.channelName = '';
           this.channelKey = '';
@@ -60,18 +59,46 @@ let ChannelComponent = {
 // component when in channel
 let ChatComponent = {
   template: `<div id='container'>
-  <div v-for='member of members'>{{ member.name }}</div>
+  <h3>Channel info</h3>
+  <div>Name: {{ channelData.name }}</div>
+  <div>Key: {{ channelData.key }}</div>
+  <h3>Members</h3>
+  <div id='members'>
+    <div v-for='member in members'>{{ member.name }}</div>
+  </div>
+  <h3>Chat</h3>
+  <div id='chat'>
+    <div v-for='message in messages'>
+      <div>{{ message.body }}</div>
+      <div>{{ message.author }} | {{ message.time }}</div>
+    </div>
+  </div>
+  <input placeholder='Send a message...' v-model='message' />
+  <button @click='sendMessage'>Send</button>
+  <h3>Video/Audio Chats</h3>
+  <p>Working here</p>
   <div><button @click='leaveChannel'>Leave channel</button></div>
 </div>`,
   data() {
     return {
-      members: []
+      // general channel variables
+      channelData: {},
+      members: [],
+      // chat ability variables
+      message: '',
+      messages: []
     };
   },
   props: {
     socket: Object
   },
   methods: {
+    sendMessage() {
+      if(this.message.trim() !== '') {
+        this.socket.emit('sendMessage', this.message.trim());
+        this.message = '';
+      }
+    },
     leaveChannel() {
       this.socket.emit('leaveChannel');
       this.$emit('toggle-view');
@@ -79,8 +106,11 @@ let ChatComponent = {
   },
   // set up members and socket handlers
   created() {
+    this.socket.emit('_channelData', _channelData => this.channelData = _channelData);
     this.socket.emit('_members');
     this.socket.on('_members', _members => this.members = _members);
+    this.socket.emit('_messages');
+    this.socket.on('_messages', _messages => this.messages = _messages);
   }
 };
 

@@ -10,24 +10,25 @@ let Member = function(name, sid) {
   this.name = name;
   this.sid = sid;
 }
+let Message = function(body, author, time) {
+  this.body = body;
+  this.author = author;
+  this.time = time;
+}
 let Channel = function(name, key) {
   // set name and key
   this.name = name.trim().toLowerCase();
   this.key = key;
   this.members = [];
+  this.messages = [];
 
   // methods
   this.addMember = function(sid, key) {
-
     // make sure not in another channel
-    let memberFound = false;
-    channels.forEach(channel => {
-      if(channel.members.find(member => member.sid === sid) !== undefined) memberFound = true;
-    })
-    if(memberFound) return false;
+    if(io.sockets.sockets[sid].data.channel !== undefined) return false;
     
     // make sure key matches
-    if(key == this.key) {
+    if(key === this.key) {
       io.sockets.sockets[sid].data.channel = this.name;
       io.sockets.sockets[sid].join(this.name);
       this.members.push(new Member(io.sockets.sockets[sid].data.name, sid));
@@ -40,6 +41,8 @@ let Channel = function(name, key) {
   this.removeMember = function(sid) {
     let member = this.members.find(member => member.sid === sid);
     this.members.splice(this.members.indexOf(member), 1);
+    io.sockets.sockets[sid].data.channel = undefined;
+
     // alert room
     io.to(this.name).emit('_members', this.members);
 
@@ -73,12 +76,12 @@ io.on('connect', socket => {
   socket.on('_channels', () => socket.emit('_channels', Array.from(channels.keys())));
 
   // join channel
-  socket.on('joinChannel', (channelName, key, cb) => {
+  socket.on('joinChannel', (name, key, cb) => {
     // make sure channel exists
-    if(!channels.has(channelName)) return cb(false);
+    if(!channels.has(name)) return cb(false);
 
     // try to add member
-    if(channels.get(channelName).addMember(socket.id, key)) {
+    if(channels.get(name).addMember(socket.id, key)) {
       cb(true);
     } else {
       cb(false);
@@ -86,8 +89,8 @@ io.on('connect', socket => {
   });
 
   // create channel
-  socket.on('createChannel', (channelName, key, cb) => {
-    let newChannel = Channel(channelName, key);
+  socket.on('createChannel', (name, key, cb) => {
+    let newChannel = new Channel(name, key);
     // if new channel valid, create it, join it, and alert everyone
     if(newChannel) {
       channels.set(newChannel.name, newChannel);
@@ -108,11 +111,34 @@ io.on('connect', socket => {
     }
   });
 
+  // send message to channel
+  socket.on('sendMessage', msg => {
+    if(socket.data.channel) {
+      let channel = channels.get(socket.data.channel);
+      channel.messages.push(new Message(msg, socket.data.name, new Date()));
+      io.to(socket.data.channel).emit('_messages', channel.messages);
+    }
+  });
+
+  // get messages
+  socket.on('_messages', () => {
+    if(socket.data.channel) {
+      socket.emit('_messages', channels.get(socket.data.channel).messages);
+    }
+  });
+  
+  // get channel data
+  socket.on('_channelData', cb => {
+    if(socket.data.channel) {
+      let channel = channels.get(socket.data.channel);
+      cb({ name: channel.name, key: channel.key });
+    }
+  });
+
   // leave channel when leave button pressed or disconnect
   socket.leaveChannel = () => {
     if(socket.data.channel) {
       channels.get(socket.data.channel).removeMember(socket.id);
-      socket.data.channel = null;
     }
   };
   socket.on('leaveChannel', socket.leaveChannel);

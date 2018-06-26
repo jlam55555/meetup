@@ -1,0 +1,11 @@
+{
+  "name": "meetup",
+  "author": "Jonathan Lam <jlam55555@gmail.com> (jonathanlam.tech)",
+  "version": "0.0.1",
+  "description": "open meeting video and text chat with WebRTC",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.16.3",
+    "socket.io": "^2.1.1"
+  }
+}

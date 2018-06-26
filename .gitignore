@@ -1,0 +1,6 @@
+# node.js build
+node_modules
+package-lock.json
+
+# vim files
+.*.swp

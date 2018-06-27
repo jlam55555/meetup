@@ -6,7 +6,7 @@ let IntroComponent = {
     <h3>Hi there. What's your name?</h3>
     <p>
       <input type='text' v-model='name' placeholder='Joe Schmoe' @keyup.enter='submitName'>
-      <button @click='submitName'>Enter</button>
+      <button @click='submitName'>Go!</button>
     </p>
   </div>
 </div>`,
@@ -137,9 +137,9 @@ let ChatComponent = {
     <h3>Video/Audio Chats</h3>
     <p>Working here</p>
     <p>You:</p>
-    <video v-if='stream !== null' :src-object.prop='stream' autoplay></video>
+    <video id='stream-local' autoplay></video> 
     <p>Connections:</p>
-    <video v-for='pcObject in pcs' v-if='pcObject.stream !== null' :src-object.prop='pcObject.stream' autoplay></video>
+    <video v-for='pcObject in pcs' :id='"stream-" + pcObject.id' autoplay></video>
   </div>
 </div>`,
   data() {
@@ -151,7 +151,7 @@ let ChatComponent = {
       message: '',
       messages: [],
       // video/audio chat webrtc peer connections
-      stream: null,
+      stream: new MediaStream(),
       pcs: []
     };
   },
@@ -159,6 +159,11 @@ let ChatComponent = {
     socket: Object,
     name: String,
     sid: String
+  },
+  watch: {
+    stream(newValue) {
+      this.$el.querySelector('#stream-local').srcObject = newValue;
+    }
   },
   methods: {
     sendMessage() {
@@ -202,7 +207,7 @@ let ChatComponent = {
             });
         });
       pc.onaddstream = event => {
-        pcObject.stream = event.stream;
+        this.$el.querySelector('#stream-' + id).srcObject = event.stream;
       };
       pc.onicecandidate = event => {
         this.socket.emit('iceCandidate', sid, id, event.candidate);
@@ -233,7 +238,6 @@ let ChatComponent = {
 
     // respond to ice candidate
     let waitForLocalDescription = (pc, candidate) => {
-      console.log(pc.currentLocalDescription, pc.localDescription, pc.currentLocalDescription === undefined, pc.localDescription.type === '');
       if(pc.localDescription.type === '') {
         setTimeout(waitForLocalDescription.bind(null, pc, candidate), 100);
       } else {
@@ -260,7 +264,7 @@ let ChatComponent = {
 
       // listen for stream and ice candidates
       pc.onaddstream = event => {
-        pcObject.stream = event.stream;
+        this.$el.querySelector('#stream-' + id).srcObject = event.stream;
       };
       pc.onicecandidate = event => {
         this.socket.emit('iceCandidate', sid, id, event.candidate);
@@ -302,7 +306,6 @@ new Vue({
       this.channel = !this.channel;
     },
     setName(name) {
-      console.log('test', name);
       this.name = name;
       this.socket.emit('*name', this.name, _sid => this.sid = _sid);
     }

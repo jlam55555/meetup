@@ -170,6 +170,7 @@ p {
 #channel-media {
   flex: 1 0 auto;
   background-color: $subtle-color;
+  overflow: auto;
 }
 .group {
   color: $dark-main-color;

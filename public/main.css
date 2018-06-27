@@ -136,7 +136,8 @@ p {
 
 #channel-media {
   flex: 1 0 auto;
-  background-color: whitesmoke; }
+  background-color: whitesmoke;
+  overflow: auto; }
 
 .group {
   color: darkslategrey;

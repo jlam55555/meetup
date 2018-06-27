@@ -1,0 +1,115 @@
+// variables
+$border-radius: 4px;
+$main-color: lightgrey;
+$dark-main-color: darkslategrey;
+$subtle-color: whitesmoke;
+$accent-color: dodgerblue;
+$transition-length: 0.2s;
+
+// document styles
+* {
+  box-sizing: border-box;
+}
+body {
+  font-size: 16px;
+  font-family: 'roboto', sans-serif;  
+}
+body, html, #app, #container {
+  padding: 0;
+  margin: 0;
+  height: 100%;
+}
+#container {
+  display: flex;
+  flex-direction: row;
+}
+
+// tag styles
+::placeholder {
+  color: $main-color;
+}
+button, input, select {
+  font-size: inherit;
+  font-family: inherit;
+  color: inherit;
+  outline: none;
+  border-radius: $border-radius;
+  border: 1px solid $main-color;
+  padding: 0.5em 1em;
+  transition:
+    background-color $transition-length,
+    color $transition-length,
+    border-color $transition-length;
+}
+button, select {
+  // general and main color styles
+  background-color: transparent;
+  cursor: pointer;
+  color: $accent-color;
+  border-color: $accent-color;
+  &:hover, &:focus, &:active {
+    background-color: $accent-color;
+    color: $subtle-color;
+  }
+
+  // alternate colors
+  &.alt {
+    color: white;
+    border-color: white;
+    &:hover, &:focus, &:active {
+      background-color: white;
+      color: $accent-color;
+    }
+  }
+}
+input {
+  // general and main color styles
+  background-color: $subtle-color;
+  color: $dark-main-color;
+  cursor: text;
+  &:focus {
+    border-color: $accent-color;
+    background-color: white;
+  }
+
+  // alt colors
+  &.alt {
+    border-color: $subtle-color;
+  }
+}
+h1, h2, h3, h4, h5, h6 {
+  font-weight: normal;
+}
+
+// ChannelComponent styles
+.channel {
+  padding: 1em;
+  margin: 1em;
+  border-radius: $border-radius;
+  background-color: white;
+  border: 1px solid $main-color;
+}
+#channels {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+#createChannel {
+  flex: 0 1 50%;
+  color: white;
+  background-color: $accent-color;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+#joinChannel {
+  flex: 1 0 50%;
+  background-color: $subtle-color;
+  height: 100%;
+}
+#joinChannelTitle {
+  text-align: center;
+}

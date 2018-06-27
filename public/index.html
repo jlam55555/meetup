@@ -6,13 +6,14 @@
     <script src='/socket.io/socket.io.js'></script>
     <!-- vue.js framework -->
     <script src='https://cdn.jsdelivr.net/npm/vue@2.5.16/dist/vue.js'></script>
-    <!-- main script -->
+    <!-- main script and styles -->
     <script src='main.js' defer></script>
+    <link rel='stylesheet' href='main.css'>
   </head>
   <body>
     <div id='app'>
-      <h1>Remeet</h3>
-      <p>Name: {{ name }}</p>
+      <!--<h1>Remeet</h3>
+      <p>Name: {{ name }}</p>-->
       <component
         :is='currentView'
         :socket='socket'

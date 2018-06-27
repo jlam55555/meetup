@@ -1,13 +1,23 @@
 // component to get into a channel
 let ChannelComponent = {
-  template: `<div id='#container'>
-  <h3>Join / Create a channel</h3>
-  <input type='text' placeholder='channel name' v-model='channelName' /><br>
-  <input type='text' placeholder='channel key' v-model='channelKey' /><br>
-  <button @click='joinChannel'>Join Channel</button><br>
-  <button @click='createChannel'>Create Channel</button>
-  <div v-for='channel in channels'>{{ channel }}</div>
-  <div v-if='error'>{{ error }}</div>
+  template: `<div id='container'>
+  <div id='createChannel'>
+    <h3>Create a channel</h3>
+    <input class='alt' type='text' placeholder='channel name' v-model='channelName' /><br>
+    <input class='alt' type='text' placeholder='channel key' v-model='channelKey' /><br>
+    <button class='alt' @click='createChannel'>Create</button>
+    <div v-if='error'>{{ error }}</div>
+  </div>
+  <div id='joinChannel'>
+    <h3 id='joinChannelTitle'>Join a channel</h3>
+    <div id='channels'>
+      <div class='channel' v-for='channel in channels'>
+        <h3>{{ channel }}</h3>
+        <p><input type='text' placeholder='Enter key' v-model='channelKey'></p>
+        <p><button @click='joinChannel'>Join</button></p>
+      </div>
+    </div>
+  </div>
 </div>`,
   props: {
     socket: Object
@@ -250,7 +260,7 @@ new Vue({
     }
   },
   created() {
-    this.name = prompt('What is your name?');
+    this.name = 'Todo'; //prompt('What is your name?');
     this.socket.emit('*name', this.name);
   }
 });

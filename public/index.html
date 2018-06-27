@@ -13,7 +13,11 @@
     <div id='app'>
       <h1>Meetup</h3>
       <p>Name: {{ name }}</p>
-      <component :is='currentView' :socket='socket' @toggle-view='toggleView'></component>
+      <component
+        :is='currentView'
+        :socket='socket'
+        :name='name'
+        @toggle-view='toggleView'></component>
     </div>
   </body>
 </html>

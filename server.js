@@ -38,10 +38,12 @@ let Channel = function(name, key) {
       return false;
     }
   };
-  this.removeMember = function(sid) {
+  this.removeMember = function(sid, isDisconnect) {
     let member = this.members.find(member => member.sid === sid);
     this.members.splice(this.members.indexOf(member), 1);
-    io.sockets.sockets[sid].data.channel = undefined;
+    if(!isDisconnect) {
+      io.sockets.sockets[sid].data.channel = undefined;
+    }
 
     // alert room
     io.to(this.name).emit('_members', this.members);
@@ -135,14 +137,49 @@ io.on('connect', socket => {
     }
   });
 
-  // leave channel when leave button pressed or disconnect
-  socket.leaveChannel = () => {
+  // request call
+  socket.on('createOffer', (sid, id, offer, cb) => {
     if(socket.data.channel) {
-      channels.get(socket.data.channel).removeMember(socket.id);
+      let channel = channels.get(socket.data.channel);
+
+      // make sure sid exists in channel
+      let callee = channel.members.find(member => member.sid === sid)
+      if(callee === undefined) {
+        return cb(false);
+      }
+
+      // ask for answer
+      io.sockets.sockets[callee.sid].emit('callOffer', socket.data.name, id, offer, answer => {
+        cb(answer);
+      });
+      
+    }
+  });
+
+  // ice candidate (very similar to above)
+  socket.on('iceCandidate', (sid, id, candidate) => {
+    if(socket.data.channel) {
+      let channel = channels.get(socket.data.channel);
+
+      // make sure sid exists in channel
+      let callee = channel.members.find(member => member.sid === sid)
+      if(callee === undefined) {
+        return;
+      }
+
+      // ask for answer
+      io.sockets.sockets[callee.sid].emit('icecandidate', id, candidate);
+    }
+  });
+
+  // leave channel when leave button pressed or disconnect
+  let leaveChannel = isDisconnect => {
+    if(socket.data.channel) {
+      channels.get(socket.data.channel).removeMember(socket.id, isDisconnect);
     }
   };
-  socket.on('leaveChannel', socket.leaveChannel);
-  socket.on('disconnect', socket.leaveChannel);
+  socket.on('leaveChannel', leaveChannel.bind(null, false));
+  socket.on('disconnect', leaveChannel.bind(null, true));
 
 });
 

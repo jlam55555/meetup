@@ -1,20 +1,25 @@
 // component to get into a channel
 let ChannelComponent = {
   template: `<div id='container'>
-  <div id='createChannel'>
+  <div id='create-channel'>
+    <h1>Remeet</h1>
     <h3>Create a channel</h3>
     <input class='alt' type='text' placeholder='channel name' v-model='channelName' /><br>
     <input class='alt' type='text' placeholder='channel key' v-model='channelKey' /><br>
     <button class='alt' @click='createChannel'>Create</button>
-    <div v-if='error'>{{ error }}</div>
+    <div id='error' v-if='error'>
+      <p>{{ error }}</p>
+      <button @click='error = ""'>Close</button>
+    </div>
   </div>
-  <div id='joinChannel'>
-    <h3 id='joinChannelTitle'>Join a channel</h3>
+  <div id='join-channel'>
+    <h3 id='join-channel-title'>Join a channel</h3>
     <div id='channels'>
+      <div v-if='channels.length == 0'>No channels found. Create one!</div>
       <div class='channel' v-for='channel in channels'>
-        <h3>{{ channel }}</h3>
-        <p><input type='text' placeholder='Enter key' v-model='channelKey'></p>
-        <p><button @click='joinChannel'>Join</button></p>
+        <h3>{{ channel.name }}</h3>
+        <p><input type='text' placeholder='Enter key' v-model='channel.key'></p>
+        <p><button @click='joinChannel(channel)'>Join</button></p>
       </div>
     </div>
   </div>
@@ -31,15 +36,13 @@ let ChannelComponent = {
     };
   },
   methods: {
-    joinChannel() {
-      this.socket.emit('joinChannel', this.channelName, this.channelKey, success => {
+    joinChannel(channel) {
+      this.socket.emit('joinChannel', channel.name, channel.key, success => {
         if(success) {
-          this.channelName = '';
-          this.channelKey = '';
-          this.error = '';
+          channel.key = '';
           this.$emit('toggle-view');
         } else {
-          this.error = 'Error joining channel: Channel doesn\'t exist, key is incorrect, or you are already in a channel.';
+          this.error = 'Channel doesn\'t exist, key is incorrect, or you are already in a channel.';
         }
       });
     },
@@ -48,10 +51,9 @@ let ChannelComponent = {
         if(success) {
           this.channelName = '';
           this.channelKey = '';
-          this.error = '';
           this.$emit('toggle-view');
         } else {
-          this.error = 'Error creating channel: Channel name must be between 3 and 50 characters (not including leading/trailing spaces). Channel key must be between 3 and 50 characters. Channel names must be unique (case doesn\'t matter).';
+          this.error = 'Channel name must be between 3 and 50 characters (not including leading/trailing spaces). Channel key must be between 3 and 50 characters. Channel names must be unique (case doesn\'t matter).';
         }
       });
     }
@@ -62,39 +64,54 @@ let ChannelComponent = {
     this.socket.emit('_channels');
 
     // on channel update, update list
-    this.socket.on('_channels', _channels => this.channels = _channels);
+    this.socket.on('_channels', _channels => 
+      this.channels = _channels.map(channelName => ({ name: channelName, key: '' })));
   }
 };
 
 // component when in channel
 let ChatComponent = {
   template: `<div id='container'>
-  <h3>Channel info</h3>
-  <div>Name: {{ channelData.name }}</div>
-  <div>Key: {{ channelData.key }}</div>
-  <h3>Members</h3>
-  <div id='members'>
-    <div v-for='member in members'>
-      <span>{{ member.name }}</span>
-      <button v-if='member.name !== name' @click='call(member.sid)'>Call</button>
+  <div id='channel-data'>
+    <h1>Remeet</h1>
+    <div class='group'>
+      <h1>Channel info</h1>
+      <p>Name: {{ channelData.name }}</p>
+      <p>Key: {{ channelData.key }}</p>
+      <p><button @click='leaveChannel'>Leave channel</button></p>
+    </div>
+    <div class='group'>
+      <h3>Members</h3>
+      <div id='members'>
+        <div v-for='member in members'>
+          <span>{{ member.name }}</span>
+          <button v-if='member.name !== name' @click='call(member.sid)'>Call</button>
+        </div>
+      </div>
+    </div>
+    <div class='group' id='chat-group'>
+      <h3>Chat</h3>
+      <div id='chat'>
+        <div v-if='messages.length == 0'>No messages yet.</div>
+        <div v-for='message in messages'>
+          <div>{{ message.body }}</div>
+          <div>{{ message.author }} | {{ message.time | timeString }}</div>
+        </div>
+      </div>
+      <div id='message-input'>
+        <input @keyup.enter='sendMessage' placeholder='Send a message...' v-model='message' />
+        <button @click='sendMessage'>Send</button>
+      </div>
     </div>
   </div>
-  <h3>Chat</h3>
-  <div id='chat'>
-    <div v-for='message in messages'>
-      <div>{{ message.body }}</div>
-      <div>{{ message.author }} | {{ message.time | timeString }}</div>
-    </div>
+  <div id='channel-media'>
+    <h3>Video/Audio Chats</h3>
+    <p>Working here</p>
+    <p>You:</p>
+    <video v-if='stream !== null' :src-object.prop='stream' autoplay></video>
+    <p>Connections:</p>
+    <video v-for='pcObject in pcs' v-if='pcObject.stream !== null' :src-object.prop='pcObject.stream' autoplay></video>
   </div>
-  <input placeholder='Send a message...' v-model='message' />
-  <button @click='sendMessage'>Send</button>
-  <h3>Video/Audio Chats</h3>
-  <p>Working here</p>
-  <p>You:</p>
-  <video v-if='stream !== null' :src-object.prop='stream' autoplay></video>
-  <p>Connections:</p>
-  <video v-for='pcObject in pcs' v-if='pcObject.stream !== null' :src-object.prop='pcObject.stream' autoplay></video>
-  <div><button @click='leaveChannel'>Leave channel</button></div>
 </div>`,
   data() {
     return {

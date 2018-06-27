@@ -4,6 +4,7 @@ $main-color: lightgrey;
 $dark-main-color: darkslategrey;
 $subtle-color: whitesmoke;
 $accent-color: dodgerblue;
+$error-color: tomato;
 $transition-length: 0.2s;
 
 // document styles
@@ -62,6 +63,11 @@ button, select {
     }
   }
 }
+fieldset {
+  border: 1px solid white;
+  padding: 1em;
+  margin-bottom: 1em;
+}
 input {
   // general and main color styles
   background-color: $subtle-color;
@@ -79,6 +85,10 @@ input {
 }
 h1, h2, h3, h4, h5, h6 {
   font-weight: normal;
+  margin: 0 0 0.75em 0;
+}
+p {
+  margin: 0 0 1em 0;
 }
 
 // ChannelComponent styles
@@ -94,22 +104,90 @@ h1, h2, h3, h4, h5, h6 {
   flex-direction: row;
   flex-wrap: wrap;
   align-items: flex-start;
+  padding: 1em;
 }
-#createChannel {
-  flex: 0 1 50%;
+#create-channel {
+  flex: 1 0 30em;
   color: white;
   background-color: $accent-color;
   height: 100%;
   display: flex;
+  padding: 1em;
   flex-direction: column;
   justify-content: center;
   align-items: center;
 }
-#joinChannel {
-  flex: 1 0 50%;
+#error {
+  margin-top: 1em;
+  color: $error-color;
+  background-color: white;
+  border-radius: $border-radius;
+  padding: 1em;
+}
+#error > p::before {
+  content: 'Error: ';
+  font-weight: bold;
+}
+#join-channel {
+  flex: 1 1 60em;
   background-color: $subtle-color;
   height: 100%;
+  padding: 1em;
 }
-#joinChannelTitle {
+#join-channel-title {
   text-align: center;
+  margin-top: 1em;
+}
+
+// ChatComponent styles
+#channel-data, #channel-media {
+  display: flex;
+  flex-direction: column;
+  flex: 1 0 0;
+  height: 100%;
+  padding: 1em;
+}
+#channel-data {
+  background-color: $accent-color;
+  color: white;
+}
+#channel-media {
+  background-color: $subtle-color;
+}
+.group {
+  color: $dark-main-color;
+  border-radius: $border-radius;
+  background-color: white;
+  padding: 1em;
+  margin-bottom: 1em;
+
+  & > :last-child {
+    margin-bottom: 0;
+  }
+
+  &#chat-group {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+
+    #chat {
+      flex-grow: 1;
+      overflow: auto;
+      margin-bottom: $border-radius;
+      border-radius: $border-radius;
+      border: 1px solid $main-color;
+    }
+
+    #message-input {
+      flex: 0 0 auto;
+      width: 100%;
+      display: flex;
+      flex-direction: row;
+
+      input {
+        flex: 1 0 0;
+        margin-right: $border-radius;
+      }
+    }
+  }
 }

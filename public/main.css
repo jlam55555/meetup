@@ -42,6 +42,11 @@ button, select {
       background-color: white;
       color: dodgerblue; }
 
+fieldset {
+  border: 1px solid white;
+  padding: 1em;
+  margin-bottom: 1em; }
+
 input {
   background-color: whitesmoke;
   color: darkslategrey;
@@ -53,7 +58,11 @@ input {
     border-color: whitesmoke; }
 
 h1, h2, h3, h4, h5, h6 {
-  font-weight: normal; }
+  font-weight: normal;
+  margin: 0 0 0.75em 0; }
+
+p {
+  margin: 0 0 1em 0; }
 
 .channel {
   padding: 1em;
@@ -66,24 +75,80 @@ h1, h2, h3, h4, h5, h6 {
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
-  align-items: flex-start; }
+  align-items: flex-start;
+  padding: 1em; }
 
-#createChannel {
-  flex: 0 1 50%;
+#create-channel {
+  flex: 1 0 30em;
   color: white;
   background-color: dodgerblue;
   height: 100%;
   display: flex;
+  padding: 1em;
   flex-direction: column;
   justify-content: center;
   align-items: center; }
 
-#joinChannel {
-  flex: 1 0 50%;
-  background-color: whitesmoke;
-  height: 100%; }
+#error {
+  margin-top: 1em;
+  color: tomato;
+  background-color: white;
+  border-radius: 4px;
+  padding: 1em; }
 
-#joinChannelTitle {
-  text-align: center; }
+#error > p::before {
+  content: 'Error: ';
+  font-weight: bold; }
+
+#join-channel {
+  flex: 1 1 60em;
+  background-color: whitesmoke;
+  height: 100%;
+  padding: 1em; }
+
+#join-channel-title {
+  text-align: center;
+  margin-top: 1em; }
+
+#channel-data, #channel-media {
+  display: flex;
+  flex-direction: column;
+  flex: 1 0 0;
+  height: 100%;
+  padding: 1em; }
+
+#channel-data {
+  background-color: dodgerblue;
+  color: white; }
+
+#channel-media {
+  background-color: whitesmoke; }
+
+.group {
+  color: darkslategrey;
+  border-radius: 4px;
+  background-color: white;
+  padding: 1em;
+  margin-bottom: 1em; }
+  .group > :last-child {
+    margin-bottom: 0; }
+  .group#chat-group {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column; }
+    .group#chat-group #chat {
+      flex-grow: 1;
+      overflow: auto;
+      margin-bottom: 4px;
+      border-radius: 4px;
+      border: 1px solid lightgrey; }
+    .group#chat-group #message-input {
+      flex: 0 0 auto;
+      width: 100%;
+      display: flex;
+      flex-direction: row; }
+      .group#chat-group #message-input input {
+        flex: 1 0 0;
+        margin-right: 4px; }
 
 /*# sourceMappingURL=main.css.map */

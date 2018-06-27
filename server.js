@@ -17,7 +17,7 @@ let Message = function(body, author, time) {
 }
 let Channel = function(name, key) {
   // set name and key
-  this.name = name.trim().toLowerCase();
+  this.name = name;
   this.key = key;
   this.members = [];
   this.messages = [];
@@ -54,15 +54,18 @@ let Channel = function(name, key) {
       io.sockets.emit('_channels', Array.from(channels.keys()));
     }
   }
-
+};
+let createChannel = (name, key) => {
+  name = name.trim().toLowerCase();
+  
   // check for duplicate name or invalid name/key length
   // if invalid, return false
   // if not, return the channel
-  return (channels.has(this.name)
-    || this.key.length < 3
-    || this.key.length > 50
-    || this.name < 3
-    || this.name.length > 50) ? false : this;
+  return (channels.has(name)
+    || key.length < 3
+    || key.length > 50
+    || name.length < 3
+    || name.length > 50) ? false : new Channel(name, key);
 };
 
 // socket.io
@@ -92,7 +95,8 @@ io.on('connect', socket => {
 
   // create channel
   socket.on('createChannel', (name, key, cb) => {
-    let newChannel = new Channel(name, key);
+    let newChannel = createChannel(name, key);
+
     // if new channel valid, create it, join it, and alert everyone
     if(newChannel) {
       channels.set(newChannel.name, newChannel);

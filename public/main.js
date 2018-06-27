@@ -73,7 +73,7 @@ let ChatComponent = {
   <div id='chat'>
     <div v-for='message in messages'>
       <div>{{ message.body }}</div>
-      <div>{{ message.author }} | {{ message.time }}</div>
+      <div>{{ message.author }} | {{ message.time | timeString }}</div>
     </div>
   </div>
   <input placeholder='Send a message...' v-model='message' />
@@ -150,6 +150,15 @@ let ChatComponent = {
       pc.onicecandidate = event => {
         this.socket.emit('iceCandidate', sid, id, event.candidate);
       };
+    }
+  },
+  filters: {
+    timeString(time) {
+      // return (h)h:mm
+      return new Intl.DateTimeFormat('en-us', {
+        hour: 'numeric',
+        minute: '2-digit'
+      }).format(new Date(time));
     }
   },
   // set up members and socket handlers

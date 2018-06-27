@@ -1,6 +1,7 @@
 // variables
 $border-radius: 4px;
 $main-color: lightgrey;
+$medium-main-color: grey;
 $dark-main-color: darkslategrey;
 $subtle-color: whitesmoke;
 $accent-color: dodgerblue;
@@ -14,6 +15,7 @@ $transition-length: 0.2s;
 body {
   font-size: 16px;
   font-family: 'roboto', sans-serif;  
+  color: $dark-main-color;
 }
 body, html, #app, #container {
   padding: 0;
@@ -91,6 +93,16 @@ p {
   margin: 0 0 1em 0;
 }
 
+// IntroComponent styles
+#intro-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  flex: 0 0 100%;
+  height: 100%;
+}
+
 // ChannelComponent styles
 .channel {
   padding: 1em;
@@ -143,15 +155,20 @@ p {
 #channel-data, #channel-media {
   display: flex;
   flex-direction: column;
-  flex: 1 0 0;
   height: 100%;
   padding: 1em;
 }
 #channel-data {
   background-color: $accent-color;
   color: white;
+  resize: horizontal;
+  overflow: hidden;
+  flex: 0 0 auto;
+  min-width: 30em;
+  max-width: calc(100% - 20em);
 }
 #channel-media {
+  flex: 1 0 auto;
   background-color: $subtle-color;
 }
 .group {
@@ -164,7 +181,26 @@ p {
   & > :last-child {
     margin-bottom: 0;
   }
+  &#members-group {
+    #members {
+      height: 10em;
+      overflow: auto;
+      background-color: $subtle-color;
+      border: 1px solid $main-color;
+      border-radius: $border-radius;
 
+      .member {
+        padding: 1em;
+
+        &:hover {
+          background-color: white;
+        }
+        &:not(:last-child) {
+          border-bottom: 1px solid $main-color;
+        }
+      }
+    }
+  }
   &#chat-group {
     flex-grow: 1;
     display: flex;
@@ -176,6 +212,34 @@ p {
       margin-bottom: $border-radius;
       border-radius: $border-radius;
       border: 1px solid $main-color;
+      background-color: $subtle-color;
+
+      .message {
+        padding: 1em;
+        display: flex;
+        flex-direction: column;
+
+        .message-body {
+          width: 80%;
+          padding: 1em;
+          border-radius: $border-radius;
+          background-color: white;
+          margin-bottom: 0.75em;
+        }
+        .message-details {
+          font-size: smaller;
+          color: $medium-main-color;
+          margin: 0 1em;
+        }
+        &.is-author {
+          align-items: flex-end;
+
+          .message-body {
+            background-color: $dark-main-color;
+            color: $subtle-color;
+          }
+        }
+      }
     }
 
     #message-input {

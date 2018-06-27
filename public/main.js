@@ -1,8 +1,33 @@
+// component to get name
+let IntroComponent = {
+  template: `<div id='container'>
+  <div id='intro-container'>
+    <h1>Remeet</h1>
+    <h3>Hi there. What's your name?</h3>
+    <p>
+      <input type='text' v-model='name' placeholder='Joe Schmoe' @keyup.enter='submitName'>
+      <button @click='submitName'>Enter</button>
+    </p>
+  </div>
+</div>`,
+  data() {
+    return {
+      name: ''
+    };
+  },
+  methods: {
+    submitName() {
+      this.$emit('set-name', this.name);
+    }
+  }
+};
+
 // component to get into a channel
 let ChannelComponent = {
   template: `<div id='container'>
   <div id='create-channel'>
     <h1>Remeet</h1>
+    <p>Welcome, {{ name }}.</p>
     <h3>Create a channel</h3>
     <input class='alt' type='text' placeholder='channel name' v-model='channelName' /><br>
     <input class='alt' type='text' placeholder='channel key' v-model='channelKey' /><br>
@@ -25,7 +50,8 @@ let ChannelComponent = {
   </div>
 </div>`,
   props: {
-    socket: Object
+    socket: Object,
+    name: String
   },
   data() {
     return {
@@ -75,27 +101,30 @@ let ChatComponent = {
   <div id='channel-data'>
     <h1>Remeet</h1>
     <div class='group'>
-      <h1>Channel info</h1>
-      <p>Name: {{ channelData.name }}</p>
-      <p>Key: {{ channelData.key }}</p>
+      <p>Channel: {{ channelData.name }}</p>
+      <p>Channel key: {{ channelData.key }}</p>
+      <p>Your name: {{ name }}</p>
       <p><button @click='leaveChannel'>Leave channel</button></p>
     </div>
-    <div class='group'>
+    <div class='group' id='members-group'>
       <h3>Members</h3>
       <div id='members'>
-        <div v-for='member in members'>
-          <span>{{ member.name }}</span>
-          <button v-if='member.name !== name' @click='call(member.sid)'>Call</button>
+        <div class='member' v-for='member in members'>
+          <span>
+            {{ member.name }}
+            <strong v-if='member.sid === sid'>(you)</strong>
+          </span>
+          <button v-if='member.sid !== sid' @click='call(member.sid)'>Call</button>
         </div>
       </div>
     </div>
     <div class='group' id='chat-group'>
       <h3>Chat</h3>
       <div id='chat'>
-        <div v-if='messages.length == 0'>No messages yet.</div>
-        <div v-for='message in messages'>
-          <div>{{ message.body }}</div>
-          <div>{{ message.author }} | {{ message.time | timeString }}</div>
+        <div class='message' v-if='messages.length == 0'>No messages yet.</div>
+        <div class='message' :class='{ "is-author": message.sid == sid }' v-for='message in messages'>
+          <div class='message-body'>{{ message.body }}</div>
+          <div class='message-details'>{{ message.sid == sid ? 'You' : message.author }} | {{ message.time | timeString }}</div>
         </div>
       </div>
       <div id='message-input'>
@@ -128,7 +157,8 @@ let ChatComponent = {
   },
   props: {
     socket: Object,
-    name: String
+    name: String,
+    sid: String
   },
   methods: {
     sendMessage() {
@@ -264,20 +294,22 @@ new Vue({
   data: {
     socket: io(),
     channel: false,
-    name: ''
+    sid: '',
+    name: false
   },
   methods: {
     toggleView() {
-      this.channel = !this.channel
+      this.channel = !this.channel;
+    },
+    setName(name) {
+      console.log('test', name);
+      this.name = name;
+      this.socket.emit('*name', this.name, _sid => this.sid = _sid);
     }
   },
   computed: {
     currentView() {
-      return this.channel ? ChatComponent : ChannelComponent;
+      return !this.name ? IntroComponent : (this.channel ? ChatComponent : ChannelComponent);
     }
-  },
-  created() {
-    this.name = 'Todo'; //prompt('What is your name?');
-    this.socket.emit('*name', this.name);
   }
 });

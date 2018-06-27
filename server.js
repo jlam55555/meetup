@@ -10,9 +10,10 @@ let Member = function(name, sid) {
   this.name = name;
   this.sid = sid;
 }
-let Message = function(body, author, time) {
+let Message = function(body, author, sid, time) {
   this.body = body;
   this.author = author;
+  this.sid = sid;
   this.time = time;
 }
 let Channel = function(name, key) {
@@ -75,7 +76,10 @@ io.on('connect', socket => {
   socket.data = {};
 
   // set name
-  socket.on('*name', name => socket.data.name = name);
+  socket.on('*name', (name, cb) => {
+    socket.data.name = name;
+    cb(socket.id);
+  });
  
   // channels getter
   socket.on('_channels', () => socket.emit('_channels', Array.from(channels.keys())));
@@ -121,7 +125,7 @@ io.on('connect', socket => {
   socket.on('sendMessage', msg => {
     if(socket.data.channel) {
       let channel = channels.get(socket.data.channel);
-      channel.messages.push(new Message(msg, socket.data.name, new Date()));
+      channel.messages.push(new Message(msg, socket.data.name, socket.id, new Date()));
       io.to(socket.data.channel).emit('_messages', channel.messages);
     }
   });

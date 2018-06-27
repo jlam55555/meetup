@@ -80,7 +80,10 @@ let ChatComponent = {
   <button @click='sendMessage'>Send</button>
   <h3>Video/Audio Chats</h3>
   <p>Working here</p>
+  <p>You:</p>
   <video v-if='stream !== null' :src-object.prop='stream' autoplay></video>
+  <p>Connections:</p>
+  <video v-for='pcObject in pcs' v-if='pcObject.stream !== null' :src-object.prop='pcObject.stream' autoplay></video>
   <div><button @click='leaveChannel'>Leave channel</button></div>
 </div>`,
   data() {
@@ -114,17 +117,20 @@ let ChatComponent = {
     call(sid) {
       let pc = new RTCPeerConnection();
       let id = Math.floor(Math.random() * 1e7);
-      this.pcs.push({
-        pcObject: pc,
+      let pcObject = {
+        pc: pc,
         id: id,
-        sid: sid
-      });
+        sid: sid,
+        stream: null
+      };
+      this.pcs.push(pcObject);
       navigator.mediaDevices.getUserMedia({
         video: true,
         audio: false
       })
-        .then(stream => {
-          pc.addStream(stream);
+        .then(_stream => {
+          this.stream = _stream;
+          pc.addStream(_stream);
 
           // begin handshake
           pc.createOffer()
@@ -139,7 +145,7 @@ let ChatComponent = {
             });
         });
       pc.onaddstream = event => {
-        this.stream = event.stream;
+        pcObject.stream = event.stream;
       };
       pc.onicecandidate = event => {
         this.socket.emit('iceCandidate', sid, id, event.candidate);
@@ -160,25 +166,35 @@ let ChatComponent = {
     this.socket.on('_messages', _messages => this.messages = _messages);
 
     // respond to ice candidate
+    let waitForLocalDescription = (pc, candidate) => {
+      console.log(pc.currentLocalDescription, pc.localDescription, pc.currentLocalDescription === undefined, pc.localDescription.type === '');
+      if(pc.localDescription.type === '') {
+        setTimeout(waitForLocalDescription.bind(null, pc, candidate), 100);
+      } else {
+        pc.addIceCandidate(candidate);
+      }
+    };
     this.socket.on('icecandidate', (id, candidate) => {
       if(candidate !== null) {
-        let pc = this.pcs.find(pc => pc.id === id).pcObject;
-        pc.addIceCandidate(candidate);
+        let pc = this.pcs.find(pc => pc.id === id).pc;
+        waitForLocalDescription(pc, candidate);
       }
     });
 
     // respond to call offer
     this.socket.on('callOffer', (name, sid, id, offer, cb) => {
       let pc = new RTCPeerConnection();
-      this.pcs.push({
-        pcObject: pc,
+      let pcObject = {
+        pc: pc,
         sid: sid,
-        id: id
-      });
+        id: id,
+        stream: null
+      };
+      this.pcs.push(pcObject);
 
       // listen for stream and ice candidates
       pc.onaddstream = event => {
-        this.stream = event.stream;
+        pcObject.stream = event.stream;
       };
       pc.onicecandidate = event => {
         this.socket.emit('iceCandidate', sid, id, event.candidate);
@@ -189,8 +205,9 @@ let ChatComponent = {
         video: true,
         audio: false
       })
-        .then(stream => {
-          pc.addStream(stream);
+        .then(_stream => {
+          this.stream = _stream;
+          pc.addStream(_stream);
 
           // create answer
           pc.setRemoteDescription(offer);

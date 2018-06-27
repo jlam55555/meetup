@@ -123,9 +123,8 @@ let ChatComponent = {
         video: true,
         audio: false
       })
-        .then(_stream => {
-          this.stream = _stream;
-          pc.addStream(_stream);
+        .then(stream => {
+          pc.addStream(stream);
 
           // begin handshake
           pc.createOffer()
@@ -140,15 +139,10 @@ let ChatComponent = {
             });
         });
       pc.onaddstream = event => {
-        console.log('got stream!');
         this.stream = event.stream;
       };
       pc.onicecandidate = event => {
-        if(event.candidate !== null) {
-          console.log('got ice candidate!');
-          //pc.addIceCandidate(event.candidate);
-          this.socket.emit('iceCandidate', sid, id, event.candidate);
-        }
+        this.socket.emit('iceCandidate', sid, id, event.candidate);
       };
     }
   },
@@ -165,43 +159,46 @@ let ChatComponent = {
     this.socket.emit('_messages');
     this.socket.on('_messages', _messages => this.messages = _messages);
 
-    // resppond to ice candidate
+    // respond to ice candidate
     this.socket.on('icecandidate', (id, candidate) => {
-      let pc = this.pcs.find(pc => pc.id === id).pcObject;
-      console.log('adding ice candidate -- for real');
-      pc.addIceCandidate(candidate);
+      if(candidate !== null) {
+        let pc = this.pcs.find(pc => pc.id === id).pcObject;
+        pc.addIceCandidate(candidate);
+      }
     });
 
     // respond to call offer
-    this.socket.on('callOffer', (name, id, offer, cb) => {
-      console.log('offer received!');
-
+    this.socket.on('callOffer', (name, sid, id, offer, cb) => {
       let pc = new RTCPeerConnection();
       this.pcs.push({
         pcObject: pc,
+        sid: sid,
         id: id
       });
-      alert('offer received!');
 
       // listen for stream and ice candidates
       pc.onaddstream = event => {
-        console.log(event.stream);
         this.stream = event.stream;
-        console.log('stream added!');
       };
-      /*pc.onicecandidate = event => {
-        if(event.candidate !== null) {
-          console.log('ice candidate received!');
-          pc.addIceCandidate(event.candidate);
-        }
-      };*/
+      pc.onicecandidate = event => {
+        this.socket.emit('iceCandidate', sid, id, event.candidate);
+      };
 
-      // create answer
-      pc.setRemoteDescription(offer);
-      pc.createAnswer()
-        .then(answer => {
-          pc.setLocalDescription(answer);
-          cb(answer);
+      // stream back
+      navigator.mediaDevices.getUserMedia({
+        video: true,
+        audio: false
+      })
+        .then(stream => {
+          pc.addStream(stream);
+
+          // create answer
+          pc.setRemoteDescription(offer);
+          pc.createAnswer()
+            .then(answer => {
+              pc.setLocalDescription(answer);
+              cb(answer);
+            });
         });
 
     })

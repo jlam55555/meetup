@@ -149,7 +149,7 @@ io.on('connect', socket => {
       }
 
       // ask for answer
-      io.sockets.sockets[callee.sid].emit('callOffer', socket.data.name, id, offer, answer => {
+      io.sockets.sockets[callee.sid].emit('callOffer', socket.data.name, socket.id, id, offer, answer => {
         cb(answer);
       });
       

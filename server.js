@@ -4,8 +4,24 @@ let app = express();
 let http = require('http').Server(app);
 let io = require('socket.io')(http);
 
-// channels (channelNames is available to the public, channels is essentially hidden)
+// channel data!
 let channels = new Map();
+
+// send channel
+let sendChannelsData = socket => {
+  // get channel key, name
+  let channelData = Array.from(channels.values()).map(channel => ({
+    name: channel.name,
+    description: channel.description,
+    memberCount: channel.members.length,
+    key: ''
+  }));
+
+  // emit to socket if provided, otherwise emit to all
+  (socket ? socket : io.sockets).emit('_channels', channelData);
+};
+
+// channel description objects
 let Member = function(name, sid) {
   this.name = name;
   this.sid = sid;
@@ -20,6 +36,7 @@ let Channel = function(name, key) {
   // set name and key
   this.name = name;
   this.key = key;
+  this.description = '';
   this.members = [];
   this.messages = [];
 
@@ -33,7 +50,8 @@ let Channel = function(name, key) {
       io.sockets.sockets[sid].data.channel = this.name;
       io.sockets.sockets[sid].join(this.name);
       this.members.push(new Member(io.sockets.sockets[sid].data.name, sid));
-      io.to(this.name).emit('_members', this.members);
+      this.sendChannelData();
+      sendChannelsData();
       return true;
     } else {
       return false;
@@ -46,15 +64,32 @@ let Channel = function(name, key) {
       io.sockets.sockets[sid].data.channel = undefined;
     }
 
-    // alert room
-    io.to(this.name).emit('_members', this.members);
-
     // if no members left, delete room and alert all
     if(this.members.length === 0) {
       channels.delete(this.name);
-      io.sockets.emit('_channels', Array.from(channels.keys()));
+    }
+
+    // alert people
+    this.sendChannelData();
+    sendChannelsData();
+  }
+  // update description
+  this.updateDescription = function(_description) {
+    if(_description !== this.description && _description.length <= 50) {
+      this.description = _description;
+      this.sendChannelData();
+      sendChannelsData();
     }
   }
+  // send this channel data to socket or room
+  this.sendChannelData = function(socket) {
+    (socket ? socket : io.to(this.name)).emit('_channelData', {
+      name: this.name,
+      key: this.key,
+      description: this.description,
+      members: this.members
+    });
+  };
 };
 let createChannel = (name, key) => {
   name = name.trim().toLowerCase();
@@ -82,7 +117,7 @@ io.on('connect', socket => {
   });
  
   // channels getter
-  socket.on('_channels', () => socket.emit('_channels', Array.from(channels.keys())));
+  socket.on('_channels', sendChannelsData.bind(null, socket));
 
   // join channel
   socket.on('joinChannel', (name, key, cb) => {
@@ -105,12 +140,19 @@ io.on('connect', socket => {
     if(newChannel) {
       channels.set(newChannel.name, newChannel);
       newChannel.addMember(socket.id, key);
-      io.sockets.emit('_channels', Array.from(channels.keys()));
+      sendChannelsData();
       cb(true);
     }
     // or invalid return false
     else {
       cb(false);
+    }
+  });
+
+  // update channel description
+  socket.on('*channel.description', description => {
+    if(socket.data.channel) {
+      channels.get(socket.data.channel).updateDescription(description);
     }
   });
 
@@ -141,7 +183,7 @@ io.on('connect', socket => {
   socket.on('_channelData', cb => {
     if(socket.data.channel) {
       let channel = channels.get(socket.data.channel);
-      cb({ name: channel.name, key: channel.key });
+      channel.sendChannelData(socket);
     }
   });
 

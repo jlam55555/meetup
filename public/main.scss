@@ -64,7 +64,7 @@ a.no-link {
 a.no-link:hover {
   text-decoration: underline;
 }
-button, input, select {
+button, input, select, textarea {
   font-size: inherit;
   font-family: inherit;
   color: inherit;
@@ -103,7 +103,7 @@ fieldset {
   padding: 1em;
   margin-bottom: 1em;
 }
-input {
+input, textarea {
   // general and main color styles
   background-color: $subtle-color;
   color: $dark-main-color;
@@ -140,9 +140,35 @@ p {
 .channel {
   padding: 1em;
   margin: 1em;
+  width: 20em;
+  height: 15em;
   border-radius: $border-radius;
   background-color: white;
   border: 1px solid $main-color;
+  display: flex;
+  flex-direction: column;
+
+  .channel-name {
+    margin-bottom: 0;
+
+    &::before {
+      content: '# ';
+      font-weight: bold;
+    }
+  }
+  .channel-member-count {
+    font-size: smaller;
+    color: $medium-main-color;
+  }
+  .channel-description {
+    flex: 1 0 0;
+  }
+  :last-child {
+    margin-bottom: 0;
+  }
+  input, button {
+    width: 100%;
+  }
 }
 #channels {
   display: flex;
@@ -199,6 +225,22 @@ p {
   flex: 0 0 auto;
   min-width: 30em;
   max-width: calc(100% - 20em);
+}
+#channel-data-table {
+  width: 100%;
+  
+  textarea {
+    width: 100%;
+    resize: none;
+  }
+  th {
+    vertical-align: top;
+    text-align: left;
+    width: 10em;
+  }
+  tr:not(:last-child) td {
+    padding-bottom: 0.5em;
+  }
 }
 #channel-media {
   flex: 1 0 auto;

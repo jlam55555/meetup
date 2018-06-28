@@ -50,7 +50,9 @@ let ChannelComponent = {
     <div id='channels'>
       <div v-if='channels.length == 0'>No channels found. Create one!</div>
       <div class='channel' v-for='channel in channels'>
-        <h3>{{ channel.name }}</h3>
+        <h2 class='channel-name'>{{ channel.name }}</h2>
+        <p class='channel-member-count'>{{ channel.memberCount }} member{{ channel.memberCount == 1 ? '' : 's' }}</p>
+        <p class='channel-description'>{{ channel.description }}</p>
         <p><input type='text' placeholder='Enter key' v-model='channel.key' @keyup.enter='joinChannel(channel)'></p>
         <p><button @click='joinChannel(channel)'>Join</button></p>
       </div>
@@ -97,8 +99,7 @@ let ChannelComponent = {
     this.socket.emit('_channels');
 
     // on channel update, update list
-    this.socket.on('_channels', _channels => 
-      this.channels = _channels.map(channelName => ({ name: channelName, key: '' })));
+    this.socket.on('_channels', _channels => this.channels = _channels);
   }
 };
 
@@ -107,13 +108,36 @@ let ChatComponent = {
   template: `<div id='container'>
   <div id='channel-data'>
     <div class='group'>
-      <p>Channel: {{ channelData.name }}</p>
-      <p>Channel key: {{ channelData.key }}</p>
+      <table id='channel-data-table'>
+        <tbody>
+          <tr>
+            <th scope='row'>Channel</th>
+            <td>{{ channelData.name }}</td>
+          </tr>
+          <tr>
+            <th scope='row'>Key</th>
+            <td>{{ channelData.key }}</td>
+          </tr>
+          <tr>
+            <th scope='row'>Description</th>
+            <td>
+              <textarea
+                v-model='channelData.description'
+                placeholder='(nothing here yet)'
+                rows='3'
+                maxlength='50'></textarea>
+              <button
+                v-if='currentDescription !== channelData.description'
+                @click='updateDescription'>Update</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
     <div class='group' id='members-group'>
-      <h3>Members</h3>
+      <h3>Members ({{ channelData.members.length }})</h3>
       <div id='members'>
-        <div class='member' v-for='member in members'>
+        <div class='member' v-for='member in channelData.members'>
           <span>
             {{ member.name }}
             <strong v-if='member.sid === sid'>(you)</strong>
@@ -156,8 +180,8 @@ let ChatComponent = {
   data() {
     return {
       // general channel variables
-      channelData: {},
-      members: [],
+      channelData: { members: [] },
+      currentDescription: '',
       // chat ability variables
       message: '',
       messages: [],
@@ -182,6 +206,9 @@ let ChatComponent = {
         this.socket.emit('sendMessage', this.message.trim());
         this.message = '';
       }
+    },
+    updateDescription() {
+      this.socket.emit('*channel.description', this.channelData.description);
     },
     disconnect(pcObject) {
       pcObject.pc.close();
@@ -259,12 +286,12 @@ let ChatComponent = {
   },
   // set up members and socket handlers
   created() {
-    // channel data at start
-    this.socket.emit('_channelData', _channelData => this.channelData = _channelData);
-
-    // members list (dynamic)
-    this.socket.emit('_members');
-    this.socket.on('_members', _members => this.members = _members);
+    // channel data (now dynamic)
+    this.socket.emit('_channelData');
+    this.socket.on('_channelData', _channelData => {
+      this.channelData = _channelData;
+      this.currentDescription = _channelData.description;
+    });
 
     // messages (dynamic)
     this.socket.emit('_messages');

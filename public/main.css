@@ -44,7 +44,7 @@ a.no-link {
 a.no-link:hover {
   text-decoration: underline; }
 
-button, input, select {
+button, input, select, textarea {
   font-size: inherit;
   font-family: inherit;
   color: inherit;
@@ -74,14 +74,14 @@ fieldset {
   padding: 1em;
   margin-bottom: 1em; }
 
-input {
+input, textarea {
   background-color: whitesmoke;
   color: darkslategrey;
   cursor: text; }
-  input:focus {
+  input:focus, textarea:focus {
     border-color: dodgerblue;
     background-color: white; }
-  input.alt {
+  input.alt, textarea.alt {
     border-color: whitesmoke; }
 
 h1, h2, h3, h4, h5, h6 {
@@ -102,9 +102,27 @@ p {
 .channel {
   padding: 1em;
   margin: 1em;
+  width: 20em;
+  height: 15em;
   border-radius: 4px;
   background-color: white;
-  border: 1px solid lightgrey; }
+  border: 1px solid lightgrey;
+  display: flex;
+  flex-direction: column; }
+  .channel .channel-name {
+    margin-bottom: 0; }
+    .channel .channel-name::before {
+      content: '# ';
+      font-weight: bold; }
+  .channel .channel-member-count {
+    font-size: smaller;
+    color: grey; }
+  .channel .channel-description {
+    flex: 1 0 0; }
+  .channel :last-child {
+    margin-bottom: 0; }
+  .channel input, .channel button {
+    width: 100%; }
 
 #channels {
   display: flex;
@@ -159,6 +177,18 @@ p {
   flex: 0 0 auto;
   min-width: 30em;
   max-width: calc(100% - 20em); }
+
+#channel-data-table {
+  width: 100%; }
+  #channel-data-table textarea {
+    width: 100%;
+    resize: none; }
+  #channel-data-table th {
+    vertical-align: top;
+    text-align: left;
+    width: 10em; }
+  #channel-data-table tr:not(:last-child) td {
+    padding-bottom: 0.5em; }
 
 #channel-media {
   flex: 1 0 auto;

@@ -16,14 +16,14 @@ body, html, #app, #container {
   flex-direction: column; }
   #app #header {
     flex: 0 1 3em;
-    background-color: darkslategrey;
-    color: whitesmoke;
+    background-color: transparent;
+    color: darkslategrey;
     display: flex;
     flex-direction: row;
     align-items: center; }
-    #app #header.intro {
-      background-color: transparent;
-      color: darkslategrey; }
+    #app #header.not-intro {
+      background-color: darkslategrey;
+      color: whitesmoke; }
     #app #header * {
       margin: 0 1em 0 0; }
     #app #header #header-title {

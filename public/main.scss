@@ -215,10 +215,10 @@ p {
   display: flex;
   flex-direction: column;
   height: 100%;
-  padding: 1em;
 }
 #channel-data {
   background-color: $accent-color;
+  padding: 1em;
   color: white;
   resize: horizontal;
   overflow: auto;
@@ -231,6 +231,7 @@ p {
   
   textarea {
     width: 100%;
+    display: block;
     resize: none;
   }
   th {
@@ -244,13 +245,32 @@ p {
 }
 #channel-media {
   flex: 1 0 auto;
-  background-color: $subtle-color;
   overflow: auto;
+  display: flex;
+  flex-direction: column;
 
+  #local-description {
+    background-color: white;
+    display: flex;
+    flex-direction: row;
+    height: 10em;
+
+    #local-description-text {
+      padding: 1em;
+      flex: 1 0 0;
+    }
+    #local-description-stream video {
+      display: block;
+      max-height: 10em;
+    }
+  }
   #videos {
+    padding: 1em;
+    flex: 1 0 0;
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;
+    background-color: $subtle-color;
 
     .video {
       padding: 1em;

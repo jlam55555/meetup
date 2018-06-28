@@ -162,13 +162,20 @@ let ChatComponent = {
     </div>
   </div>
   <div id='channel-media'>
-    <h3>Video/Audio Chats</h3>
-    <div v-if='pcs.length == 0'>No connected streams. Create one on the left!</div>
-    <div id='videos'>
-      <div class='video' v-show='stream !== null'>
-        <h3><strong>You</strong></h3>
-        <video id='stream-local' autoplay></video> 
+    <div id='local-description'>
+      <div id='local-description-text'>
+        <h3>Video/Audio Streams</h3>
+        <p v-if='pcs.length == 0'>No connected streams. Create one on the left!</p>
+        <div id='stream-options'>
+          <p>Video: <input type='checkbox' v-model='streamOptions.videoStream'></p>
+          <p>Audio: <input type='checkbox' v-model='streamOptions.audioStream'></p>
+        </div>
       </div>
+      <div id='local-description-stream'>
+        <video id='stream-local' v-show='stream !== null' autoplay muted></video> 
+      </div>
+    </div>
+    <div id='videos'>
       <div class='video' v-for='pcObject in pcs'>
         <h3>{{ pcObject.name }}</h3>
         <video :id='"stream-" + pcObject.id' autoplay></video>
@@ -186,6 +193,10 @@ let ChatComponent = {
       message: '',
       messages: [],
       // video/audio chat webrtc peer connections
+      streamOptions: {
+        videoStream: true,
+        audioStream: false
+      },
       stream: null,
       pcs: []
     };
@@ -228,7 +239,10 @@ let ChatComponent = {
       // handshake
       let handshake = () => {
         // begin handshake
-        pc.createOffer()
+        pc.createOffer({
+          offerToReceiveAudio: true,
+          offerToReceiveVideo: true
+        })
           .then(offer => {
             // set local description
             pc.setLocalDescription(offer);
@@ -243,8 +257,8 @@ let ChatComponent = {
       // if no stream create stream
       if(this.stream == null) {
         navigator.mediaDevices.getUserMedia({
-          video: true,
-          audio: false
+          video: this.streamOptions.videoStream,
+          audio: this.streamOptions.audioStream
         })
           .then(_stream => {
             this.stream = _stream;
@@ -268,7 +282,7 @@ let ChatComponent = {
         if(pc.iceConnectionState == 'disconnected' || pc.iceConnectionState == 'closed') {
           this.pcs.splice(this.pcs.indexOf(pcObject), 1);
           if(this.pcs.length === 0) {
-            this.stream.getTracks()[0].stop();
+            this.stream.getTracks().forEach(track => track.stop());
             this.stream = null;
           }
         }
@@ -326,13 +340,14 @@ let ChatComponent = {
 
       // listen for stream and ice candidates
       pc.onaddstream = event => {
+        console.log('received stream');
         this.$el.querySelector('#stream-' + id).srcObject = event.stream;
       };
       pc.oniceconnectionstatechange = event => {
         if(pc.iceConnectionState == 'disconnected' || pc.iceConnectionState == 'closed') {
           this.pcs.splice(this.pcs.indexOf(pcObject), 1);
           if(this.pcs.length === 0) {
-            this.stream.getTracks()[0].stop();
+            this.stream.getTracks().forEach(track => track.stop());
             this.stream = null;
           }
         }
@@ -345,7 +360,10 @@ let ChatComponent = {
       let handshake = () => {
         // create answer
         pc.setRemoteDescription(offer);
-        pc.createAnswer()
+        pc.createAnswer({
+          offerToReceiveAudio: true,
+          offerToReceiveVideo: true
+        })
           .then(answer => {
             pc.setLocalDescription(answer);
             cb(answer);
@@ -356,8 +374,8 @@ let ChatComponent = {
       // if no stream create one
       if(this.stream === null) {
         navigator.mediaDevices.getUserMedia({
-          video: true,
-          audio: false
+          video: this.streamOptions.videoStream,
+          audio: this.streamOptions.audioStream
         })
           .then(_stream => {
             this.stream = _stream;

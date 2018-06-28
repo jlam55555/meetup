@@ -166,11 +166,11 @@ p {
 #channel-data, #channel-media {
   display: flex;
   flex-direction: column;
-  height: 100%;
-  padding: 1em; }
+  height: 100%; }
 
 #channel-data {
   background-color: dodgerblue;
+  padding: 1em;
   color: white;
   resize: horizontal;
   overflow: auto;
@@ -182,6 +182,7 @@ p {
   width: 100%; }
   #channel-data-table textarea {
     width: 100%;
+    display: block;
     resize: none; }
   #channel-data-table th {
     vertical-align: top;
@@ -192,12 +193,27 @@ p {
 
 #channel-media {
   flex: 1 0 auto;
-  background-color: whitesmoke;
-  overflow: auto; }
-  #channel-media #videos {
+  overflow: auto;
+  display: flex;
+  flex-direction: column; }
+  #channel-media #local-description {
+    background-color: white;
     display: flex;
     flex-direction: row;
-    flex-wrap: wrap; }
+    height: 10em; }
+    #channel-media #local-description #local-description-text {
+      padding: 1em;
+      flex: 1 0 0; }
+    #channel-media #local-description #local-description-stream video {
+      display: block;
+      max-height: 10em; }
+  #channel-media #videos {
+    padding: 1em;
+    flex: 1 0 0;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    background-color: whitesmoke; }
     #channel-media #videos .video {
       padding: 1em;
       margin: 1em;

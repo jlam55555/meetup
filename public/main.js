@@ -2,12 +2,11 @@
 let IntroComponent = {
   template: `<div id='container'>
   <div id='intro-container'>
-    <h1>Remeet</h1>
-    <h3>{{ ethosGreeting }} What's your name?</h3>
-    <p>
+    <h1>{{ ethosGreeting }} What's your name?</h1>
+    <h3>
       <input type='text' v-model='name' placeholder='Joe Schmoe' @keyup.enter='submitName' autofocus>
       <button @click='submitName'>Go!</button>
-    </p>
+    </h3>
   </div>
 </div>`,
   data() {
@@ -26,7 +25,7 @@ let IntroComponent = {
       'Howdy there.',
       'You look great today.',
       'Hey!',
-      'Hey, beautiful.',
+      'Hey gorgeous.',
       'Nice to see you here.'
     ]; 
     this.ethosGreeting = ethosGreetings[Math.floor(Math.random() * ethosGreetings.length)];
@@ -37,8 +36,6 @@ let IntroComponent = {
 let ChannelComponent = {
   template: `<div id='container'>
   <div id='create-channel'>
-    <h1>Remeet</h1>
-    <p>Welcome, {{ name }}.</p>
     <h3>Create a channel</h3>
     <input class='alt' type='text' placeholder='channel name' v-model='channelName' /><br>
     <input class='alt' type='text' placeholder='channel key' v-model='channelKey' @keyup.enter='createChannel' /><br>
@@ -61,8 +58,7 @@ let ChannelComponent = {
   </div>
 </div>`,
   props: {
-    socket: Object,
-    name: String
+    socket: Object
   },
   data() {
     return {
@@ -110,12 +106,9 @@ let ChannelComponent = {
 let ChatComponent = {
   template: `<div id='container'>
   <div id='channel-data'>
-    <h1>Remeet</h1>
     <div class='group'>
       <p>Channel: {{ channelData.name }}</p>
       <p>Channel key: {{ channelData.key }}</p>
-      <p>Your name: {{ name }}</p>
-      <p><button @click='leaveChannel'>Leave channel</button></p>
     </div>
     <div class='group' id='members-group'>
       <h3>Members</h3>
@@ -189,10 +182,6 @@ let ChatComponent = {
         this.socket.emit('sendMessage', this.message.trim());
         this.message = '';
       }
-    },
-    leaveChannel() {
-      this.socket.emit('leaveChannel');
-      this.$emit('toggle-view');
     },
     disconnect(pcObject) {
       pcObject.pc.close();
@@ -375,6 +364,10 @@ new Vue({
     setName(name) {
       this.name = name;
       this.socket.emit('*name', this.name, _sid => this.sid = _sid);
+    },
+    leaveChannel() {
+      this.socket.emit('leaveChannel');
+      this.toggleView();
     }
   },
   computed: {

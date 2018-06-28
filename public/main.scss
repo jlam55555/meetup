@@ -22,14 +22,47 @@ body, html, #app, #container {
   margin: 0;
   height: 100%;
 }
-#container {
+#app {
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
+
+  #header {
+    flex: 0 1 3em;
+    background-color: $dark-main-color;
+    color: $subtle-color;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    
+    &.intro {
+      background-color: transparent;
+      color: $dark-main-color;
+    }
+    * {
+      margin: 0 1em 0 0;
+    }
+    #header-title {
+      flex: 1 0 0;
+      margin-left: 1em;
+    }
+  }
+  #container {
+    flex: 1 0 0;
+    display: flex;
+    flex-direction: row;
+  }
 }
 
 // tag styles
 ::placeholder {
   color: $main-color;
+}
+a.no-link {
+  color: inherit;
+  text-decoration: none;
+}
+a.no-link:hover {
+  text-decoration: underline;
 }
 button, input, select {
   font-size: inherit;

@@ -12,6 +12,14 @@
   </head>
   <body>
     <div id='app'>
+      <div :class='{ intro: !name }' id='header'>
+        <h3 id='header-title'>
+          <strong>Remeet</strong>
+          <a class='no-link' href='//eis.jonathanlam.tech/posts/introducing-remeet' target='_blank'>About</a>
+        </h3>
+        <div v-if='name'>Welcome, {{ name }}.</div>
+        <button class='alt' v-if='channel' @click='leaveChannel'>Leave channel</button>
+      </div>
       <component
         :is='currentView'
         :socket='socket'

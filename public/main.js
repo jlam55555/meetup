@@ -143,7 +143,7 @@ let ChatComponent = {
       <div class='video' v-for='pcObject in pcs'>
         <h3>{{ pcObject.name }}</h3>
         <video :id='"stream-" + pcObject.id' autoplay></video>
-        <button>Disconnect</button>
+        <button @click='disconnect(pcObject)'>Disconnect</button>
       </div>
     </div>
   </div>
@@ -182,6 +182,10 @@ let ChatComponent = {
       this.socket.emit('leaveChannel');
       this.$emit('toggle-view');
     },
+    disconnect(pcObject) {
+      //pcObject.pc.removeStream(pcObject.pc.getLocalStreams()[0]);
+      pcObject.pc.close();
+    },
     call(name, sid) {
       let pc = new RTCPeerConnection();
       let id = Math.floor(Math.random() * 1e7);
@@ -214,10 +218,16 @@ let ChatComponent = {
             });
         });
       pc.onaddstream = event => {
+        pcObject.stream = event.stream;
         this.$el.querySelector('#stream-' + id).srcObject = event.stream;
       };
       pc.onicecandidate = event => {
         this.socket.emit('iceCandidate', sid, id, event.candidate);
+      };
+      pc.oniceconnectionstatechange = event => {
+        if(pc.iceConnectionState == 'disconnected' || pc.iceConnectionState == 'closed') {
+          this.pcs.splice(this.pcs.indexOf(pcObject), 1);
+        }
       };
     }
   },
@@ -272,7 +282,13 @@ let ChatComponent = {
 
       // listen for stream and ice candidates
       pc.onaddstream = event => {
+        pcObject.stream = event.stream;
         this.$el.querySelector('#stream-' + id).srcObject = event.stream;
+      };
+      pc.oniceconnectionstatechange = event => {
+        if(pc.iceConnectionState == 'disconnected' || pc.iceConnectionState == 'closed') {
+          this.pcs.splice(this.pcs.indexOf(pcObject), 1);
+        }
       };
       pc.onicecandidate = event => {
         this.socket.emit('iceCandidate', sid, id, event.candidate);

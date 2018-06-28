@@ -171,6 +171,25 @@ p {
   flex: 1 0 auto;
   background-color: $subtle-color;
   overflow: auto;
+
+  #videos {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+
+    .video {
+      padding: 1em;
+      margin: 1em;
+      border: 1px solid $main-color;
+      display: flex;
+      flex-direction: column;
+
+      video {
+        max-width: 360px;
+        margin-bottom: 1em;
+      }
+    }
+  }
 }
 .group {
   color: $dark-main-color;

@@ -138,6 +138,19 @@ p {
   flex: 1 0 auto;
   background-color: whitesmoke;
   overflow: auto; }
+  #channel-media #videos {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap; }
+    #channel-media #videos .video {
+      padding: 1em;
+      margin: 1em;
+      border: 1px solid lightgrey;
+      display: flex;
+      flex-direction: column; }
+      #channel-media #videos .video video {
+        max-width: 360px;
+        margin-bottom: 1em; }
 
 .group {
   color: darkslategrey;

@@ -114,7 +114,7 @@ let ChatComponent = {
             {{ member.name }}
             <strong v-if='member.sid === sid'>(you)</strong>
           </span>
-          <button v-if='member.sid !== sid' @click='call(member.sid)'>Call</button>
+          <button v-if='member.sid !== sid' @click='call(member.name, member.sid)'>Call</button>
         </div>
       </div>
     </div>
@@ -135,11 +135,17 @@ let ChatComponent = {
   </div>
   <div id='channel-media'>
     <h3>Video/Audio Chats</h3>
-    <p>Working here</p>
-    <p>You:</p>
-    <video id='stream-local' autoplay></video> 
-    <p>Connections:</p>
-    <video v-for='pcObject in pcs' :id='"stream-" + pcObject.id' autoplay></video>
+    <div id='videos'>
+      <div class='video'>
+        <h3><strong>You</strong></h3>
+        <video id='stream-local' autoplay></video> 
+      </div>
+      <div class='video' v-for='pcObject in pcs'>
+        <h3>{{ pcObject.name }}</h3>
+        <video :id='"stream-" + pcObject.id' autoplay></video>
+        <button>Disconnect</button>
+      </div>
+    </div>
   </div>
 </div>`,
   data() {
@@ -176,11 +182,12 @@ let ChatComponent = {
       this.socket.emit('leaveChannel');
       this.$emit('toggle-view');
     },
-    call(sid) {
+    call(name, sid) {
       let pc = new RTCPeerConnection();
       let id = Math.floor(Math.random() * 1e7);
       let pcObject = {
         pc: pc,
+        name: name,
         id: id,
         sid: sid,
         stream: null
@@ -257,6 +264,7 @@ let ChatComponent = {
       let pcObject = {
         pc: pc,
         sid: sid,
+        name: name,
         id: id,
         stream: null
       };

@@ -209,6 +209,59 @@ let ChatComponent = {
   watch: {
     stream(newValue) {
       this.$el.querySelector('#stream-local').srcObject = newValue;
+    },
+    streamOptions: {
+      // if existing streams, change them
+      // if no existing streams, no change
+      handler(newValue) {
+        // update pc streams
+        let updatePcs = () => {
+          this.pcs.forEach(pcObject => {
+            let pc = pcObject.pc;
+            pc.getLocalStreams().forEach(localStream => {
+              pc.removeStream(localStream);
+            });
+            pc.addStream(this.stream);
+
+            // redo handshake
+            pc.createOffer({
+              offerToReceiveAudio: true,
+              offerToReceiveVideo: true
+            })
+              .then(offer => {
+                // set local description
+                pc.setLocalDescription(offer);
+
+                // ask for response from websocket
+                this.socket.emit('createOffer', pcObject.sid, pcObject.id, offer, success => {
+                  pc.setRemoteDescription(success);
+                });
+              });
+              
+            });
+        };
+
+        // get stream before updating pcs
+        if(this.pcs.length > 0) {
+          // stop current stream
+          this.stream.getTracks().forEach(track => track.stop());
+          // update this.stream
+          if(newValue.videoStream || newValue.audioStream) {
+            navigator.mediaDevices.getUserMedia({
+              video: newValue.videoStream,
+              audio: newValue.audioStream
+            })
+              .then(_stream => {
+                this.stream = _stream;
+                updatePcs();
+              });
+          } else {
+            this.stream = new MediaStream();
+            updatePcs();
+          }
+        }
+      },
+      deep: true
     }
   },
   methods: {
@@ -256,16 +309,23 @@ let ChatComponent = {
 
       // if no stream create stream
       if(this.stream == null) {
-        navigator.mediaDevices.getUserMedia({
-          video: this.streamOptions.videoStream,
-          audio: this.streamOptions.audioStream
-        })
-          .then(_stream => {
-            this.stream = _stream;
-            pc.addStream(_stream);
+        if(this.streamOptions.videoStream || this.streamOptions.audioStream) {
+          navigator.mediaDevices.getUserMedia({
+            video: this.streamOptions.videoStream,
+            audio: this.streamOptions.audioStream
+          })
+            .then(_stream => {
+              this.stream = _stream;
+              pc.addStream(_stream);
 
-            handshake();
-          });
+              handshake();
+            });
+        } else {
+          this.stream = new MediaStream();
+          pc.addStream(this.stream);
+
+          handshake();
+        }
       }
       // if stream exists use it
       else {
@@ -328,33 +388,43 @@ let ChatComponent = {
 
     // respond to call offer
     this.socket.on('callOffer', (name, sid, id, offer, cb) => {
-      let pc = new RTCPeerConnection();
-      let pcObject = {
-        pc: pc,
-        sid: sid,
-        name: name,
-        id: id,
-        stream: null
-      };
-      this.pcs.push(pcObject);
+      let pc, pcObject;
 
-      // listen for stream and ice candidates
-      pc.onaddstream = event => {
-        console.log('received stream');
-        this.$el.querySelector('#stream-' + id).srcObject = event.stream;
-      };
-      pc.oniceconnectionstatechange = event => {
-        if(pc.iceConnectionState == 'disconnected' || pc.iceConnectionState == 'closed') {
-          this.pcs.splice(this.pcs.indexOf(pcObject), 1);
-          if(this.pcs.length === 0) {
-            this.stream.getTracks().forEach(track => track.stop());
-            this.stream = null;
+      // check for existing pc object (for renegotiation
+      let existingPcObject = this.pcs.find(pcObject => pcObject.id === id);
+      if(existingPcObject === undefined) {
+        pc = new RTCPeerConnection();
+        pcObject = {
+          pc: pc,
+          sid: sid,
+          name: name,
+          id: id,
+          stream: null
+        };
+        this.pcs.push(pcObject);
+
+        // listen for stream and ice candidates
+        pc.onaddstream = event => {
+          this.$el.querySelector('#stream-' + id).srcObject = event.stream;
+        };
+        pc.oniceconnectionstatechange = event => {
+          if(pc.iceConnectionState == 'disconnected' || pc.iceConnectionState == 'closed') {
+            this.pcs.splice(this.pcs.indexOf(pcObject), 1);
+            if(this.pcs.length === 0) {
+              this.stream.getTracks().forEach(track => track.stop());
+              this.stream = null;
+            }
           }
-        }
-      };
-      pc.onicecandidate = event => {
-        this.socket.emit('iceCandidate', sid, id, event.candidate);
-      };
+        };
+        pc.onicecandidate = event => {
+          this.socket.emit('iceCandidate', sid, id, event.candidate);
+        };
+      }
+      // otherwise use existing pc object
+      else {
+        pcObject = existingPcObject;
+        pc = pcObject.pc;
+      }
 
       // handshake
       let handshake = () => {

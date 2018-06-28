@@ -227,6 +227,10 @@ let ChatComponent = {
       pc.oniceconnectionstatechange = event => {
         if(pc.iceConnectionState == 'disconnected' || pc.iceConnectionState == 'closed') {
           this.pcs.splice(this.pcs.indexOf(pcObject), 1);
+          if(this.pcs.length === 0) {
+            this.stream.getTracks()[0].stop();
+            console.log('stop thing');
+          }
         }
       };
     }
@@ -288,6 +292,10 @@ let ChatComponent = {
       pc.oniceconnectionstatechange = event => {
         if(pc.iceConnectionState == 'disconnected' || pc.iceConnectionState == 'closed') {
           this.pcs.splice(this.pcs.indexOf(pcObject), 1);
+          if(this.pcs.length === 0) {
+            this.stream.getTracks()[0].stop();
+            console.log('stop thing');
+          }
         }
       };
       pc.onicecandidate = event => {

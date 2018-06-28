@@ -162,7 +162,7 @@ p {
   background-color: $accent-color;
   color: white;
   resize: horizontal;
-  overflow: hidden;
+  overflow: auto;
   flex: 0 0 auto;
   min-width: 30em;
   max-width: calc(100% - 20em);
@@ -222,7 +222,7 @@ p {
     }
   }
   &#chat-group {
-    flex-grow: 1;
+    flex: 1 0 15em;
     display: flex;
     flex-direction: column;
 

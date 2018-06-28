@@ -129,7 +129,7 @@ p {
   background-color: dodgerblue;
   color: white;
   resize: horizontal;
-  overflow: hidden;
+  overflow: auto;
   flex: 0 0 auto;
   min-width: 30em;
   max-width: calc(100% - 20em); }
@@ -173,7 +173,7 @@ p {
       .group#members-group #members .member:not(:last-child) {
         border-bottom: 1px solid lightgrey; }
   .group#chat-group {
-    flex-grow: 1;
+    flex: 1 0 15em;
     display: flex;
     flex-direction: column; }
     .group#chat-group #chat {

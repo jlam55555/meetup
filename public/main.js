@@ -3,22 +3,33 @@ let IntroComponent = {
   template: `<div id='container'>
   <div id='intro-container'>
     <h1>Remeet</h1>
-    <h3>Hi there. What's your name?</h3>
+    <h3>{{ ethosGreeting }} What's your name?</h3>
     <p>
-      <input type='text' v-model='name' placeholder='Joe Schmoe' @keyup.enter='submitName'>
+      <input type='text' v-model='name' placeholder='Joe Schmoe' @keyup.enter='submitName' autofocus>
       <button @click='submitName'>Go!</button>
     </p>
   </div>
 </div>`,
   data() {
     return {
-      name: ''
+      name: '',
+      ethosGreeting: ''
     };
   },
   methods: {
     submitName() {
       this.$emit('set-name', this.name);
     }
+  },
+  created() {
+    let ethosGreetings = [
+      'Howdy there.',
+      'You look great today.',
+      'Hey!',
+      'Hey, beautiful.',
+      'Nice to see you here.'
+    ]; 
+    this.ethosGreeting = ethosGreetings[Math.floor(Math.random() * ethosGreetings.length)];
   }
 };
 
@@ -30,7 +41,7 @@ let ChannelComponent = {
     <p>Welcome, {{ name }}.</p>
     <h3>Create a channel</h3>
     <input class='alt' type='text' placeholder='channel name' v-model='channelName' /><br>
-    <input class='alt' type='text' placeholder='channel key' v-model='channelKey' /><br>
+    <input class='alt' type='text' placeholder='channel key' v-model='channelKey' @keyup.enter='createChannel' /><br>
     <button class='alt' @click='createChannel'>Create</button>
     <div id='error' v-if='error'>
       <p>{{ error }}</p>
@@ -43,7 +54,7 @@ let ChannelComponent = {
       <div v-if='channels.length == 0'>No channels found. Create one!</div>
       <div class='channel' v-for='channel in channels'>
         <h3>{{ channel.name }}</h3>
-        <p><input type='text' placeholder='Enter key' v-model='channel.key'></p>
+        <p><input type='text' placeholder='Enter key' v-model='channel.key' @keyup.enter='joinChannel(channel)'></p>
         <p><button @click='joinChannel(channel)'>Join</button></p>
       </div>
     </div>
@@ -135,8 +146,9 @@ let ChatComponent = {
   </div>
   <div id='channel-media'>
     <h3>Video/Audio Chats</h3>
+    <div v-if='pcs.length == 0'>No connected streams. Create one on the left!</div>
     <div id='videos'>
-      <div class='video'>
+      <div class='video' v-show='stream !== null'>
         <h3><strong>You</strong></h3>
         <video id='stream-local' autoplay></video> 
       </div>
@@ -157,7 +169,7 @@ let ChatComponent = {
       message: '',
       messages: [],
       // video/audio chat webrtc peer connections
-      stream: new MediaStream(),
+      stream: null,
       pcs: []
     };
   },
@@ -183,7 +195,6 @@ let ChatComponent = {
       this.$emit('toggle-view');
     },
     disconnect(pcObject) {
-      //pcObject.pc.removeStream(pcObject.pc.getLocalStreams()[0]);
       pcObject.pc.close();
     },
     call(name, sid) {
@@ -197,28 +208,41 @@ let ChatComponent = {
         stream: null
       };
       this.pcs.push(pcObject);
-      navigator.mediaDevices.getUserMedia({
-        video: true,
-        audio: false
-      })
-        .then(_stream => {
-          this.stream = _stream;
-          pc.addStream(_stream);
 
-          // begin handshake
-          pc.createOffer()
-            .then(offer => {
-              // set local description
-              pc.setLocalDescription(offer);
+      // handshake
+      let handshake = () => {
+        // begin handshake
+        pc.createOffer()
+          .then(offer => {
+            // set local description
+            pc.setLocalDescription(offer);
 
-              // ask for response from websocket
-              this.socket.emit('createOffer', sid, id, offer, success => {
-                pc.setRemoteDescription(success);
-              });
+            // ask for response from websocket
+            this.socket.emit('createOffer', sid, id, offer, success => {
+              pc.setRemoteDescription(success);
             });
-        });
+          });
+      };
+
+      // if no stream create stream
+      if(this.stream == null) {
+        navigator.mediaDevices.getUserMedia({
+          video: true,
+          audio: false
+        })
+          .then(_stream => {
+            this.stream = _stream;
+            pc.addStream(_stream);
+
+            handshake();
+          });
+      }
+      // if stream exists use it
+      else {
+        pc.addStream(this.stream);
+        handshake();
+      }
       pc.onaddstream = event => {
-        pcObject.stream = event.stream;
         this.$el.querySelector('#stream-' + id).srcObject = event.stream;
       };
       pc.onicecandidate = event => {
@@ -229,7 +253,7 @@ let ChatComponent = {
           this.pcs.splice(this.pcs.indexOf(pcObject), 1);
           if(this.pcs.length === 0) {
             this.stream.getTracks()[0].stop();
-            console.log('stop thing');
+            this.stream = null;
           }
         }
       };
@@ -286,7 +310,6 @@ let ChatComponent = {
 
       // listen for stream and ice candidates
       pc.onaddstream = event => {
-        pcObject.stream = event.stream;
         this.$el.querySelector('#stream-' + id).srcObject = event.stream;
       };
       pc.oniceconnectionstatechange = event => {
@@ -294,7 +317,7 @@ let ChatComponent = {
           this.pcs.splice(this.pcs.indexOf(pcObject), 1);
           if(this.pcs.length === 0) {
             this.stream.getTracks()[0].stop();
-            console.log('stop thing');
+            this.stream = null;
           }
         }
       };
@@ -302,25 +325,37 @@ let ChatComponent = {
         this.socket.emit('iceCandidate', sid, id, event.candidate);
       };
 
+      // handshake
+      let handshake = () => {
+        // create answer
+        pc.setRemoteDescription(offer);
+        pc.createAnswer()
+          .then(answer => {
+            pc.setLocalDescription(answer);
+            cb(answer);
+          });
+      };
+
       // stream back
-      navigator.mediaDevices.getUserMedia({
-        video: true,
-        audio: false
-      })
-        .then(_stream => {
-          this.stream = _stream;
-          pc.addStream(_stream);
+      // if no stream create one
+      if(this.stream === null) {
+        navigator.mediaDevices.getUserMedia({
+          video: true,
+          audio: false
+        })
+          .then(_stream => {
+            this.stream = _stream;
+            pc.addStream(_stream);
 
-          // create answer
-          pc.setRemoteDescription(offer);
-          pc.createAnswer()
-            .then(answer => {
-              pc.setLocalDescription(answer);
-              cb(answer);
-            });
-        });
-
-    })
+            handshake();
+          });
+      }
+      // if stream exists use it
+      else {
+        pc.addStream(this.stream);
+        handshake();
+      }
+    });
   }
 };
 

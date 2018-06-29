@@ -586,6 +586,10 @@ let ChatComponent = {
         handshake();
       }
     });
+  },
+  // when closed close all calls
+  destroyed() {
+    this.pcs.forEach(pcObject => pcObject.pc.close());
   }
 };
 

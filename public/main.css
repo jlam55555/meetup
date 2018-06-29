@@ -37,7 +37,7 @@ body, html, #app, #container {
 ::placeholder {
   color: lightgrey; }
 
-#channel-media .fa-button, #channel-media #videos .video .video-controls h1 {
+#channel-media .fa-button, #channel-media #videos .video .video-controls .video-details {
   -webkit-touch-callout: none;
   /* iOS Safari */
   -webkit-user-select: none;
@@ -229,6 +229,18 @@ p {
       color: white; }
     #channel-media .fa-button#resize-handle {
       cursor: se-resize; }
+    #channel-media .fa-button#video-background {
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      left: 0;
+      top: 0;
+      font-size: 5em;
+      border: none;
+      color: lightgrey;
+      border-radius: 0;
+      background-color: white;
+      z-index: 0; }
   #channel-media #local-description {
     background-color: white;
     display: flex;
@@ -268,7 +280,9 @@ p {
       #channel-media #videos .video video {
         width: 100%;
         height: 100%;
-        object-fit: cover; }
+        object-fit: cover;
+        position: relative;
+        z-index: 1; }
       #channel-media #videos .video .video-controls {
         opacity: 0;
         width: 100%;
@@ -282,16 +296,27 @@ p {
         cursor: -webkit-grab;
         transition: opacity 0.2s;
         display: flex;
-        flex-direction: column; }
+        flex-direction: column;
+        z-index: 2; }
         #channel-media #videos .video .video-controls:hover {
           opacity: 1; }
-        #channel-media #videos .video .video-controls h1 {
+        #channel-media #videos .video .video-controls .video-details {
           flex-grow: 1;
           display: flex;
           flex-direction: column;
           justify-content: center;
-          text-align: center;
-          color: dodgerblue; }
+          text-align: center; }
+          #channel-media #videos .video .video-controls .video-details h1 {
+            color: dodgerblue; }
+          #channel-media #videos .video .video-controls .video-details i {
+            font-size: 1em;
+            color: grey;
+            cursor: inherit;
+            border: none;
+            display: inline-block; }
+            #channel-media #videos .video .video-controls .video-details i:hover {
+              background-color: transparent;
+              color: grey; }
         #channel-media #videos .video .video-controls .video-control-buttons {
           display: flex;
           flex-direction: row;

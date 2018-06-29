@@ -208,12 +208,23 @@ let ChatComponent = {
     </div>
     <div id='videos'>
       <div class='video' v-for='pcObject in pcs' @mousedown='beginDrag' title='drag video'>
-        <video :id='"stream-" + pcObject.id' autoplay></video>
+        <i class='fa-button far fa-user' id='video-background'></i>
+        <video :id='"stream-" + pcObject.id' autoplay :muted.prop='pcObject.muted'></video>
         <div class='video-controls'>
-          <h1>{{ pcObject.name }}</h1>
+          <div class='video-details'>
+            <h1>{{ pcObject.name }}</h1>
+            <p>
+              <i
+                :class='[ "fas", "fa-button", "fa-video" + (pcObject.hasVideo ? "" : "-slash") ]'
+                :title='pcObject.name + "&#39;s camera is " + (pcObject.hasVideo ? "on" : "off")'></i>
+              <i
+                :class='[ "fas", "fa-button", "fa-microphone-alt" + (pcObject.hasAudio ? "" : "-slash") ]'
+                :title='pcObject.name + "&#39;s microphone is " + (pcObject.hasAudio ? "on" : "off")'></i>
+            </p>
+          </div>
           <div class='video-control-buttons'>
             <i class='fa-button fas fa-times' @click='disconnect(pcObject)' title='end call'></i>
-            <i :class='[ "fa-button", "fas", "fa-volume-" + (pcObject.muted ? "off" : "up") ]' @click='pcObject.muted = !pcObject.muted' :title='pcObject.muted ? "muted" : "sound on"'></i>
+            <i :class='[ "fa-button", "fas", "fa-volume-" + (pcObject.muted ? "off" : "up") ]' @click='pcObject.muted = !pcObject.muted' :title='pcObject.muted ? "muted" : "not muted"'></i>
             <div class='fa-button' id='resize-handle' @mousedown='beginResize' title='resize video'>&#x1F866;</div>
           </div>
         </div>
@@ -230,7 +241,7 @@ let ChatComponent = {
       message: '',
       messages: [],
       // video/audio chat webrtc peer connections
-      streamOptions: { videoStream: true, audioStream: false },
+      streamOptions: { videoStream: true, audioStream: true },
       stream: null,
       pcs: [],
       // resize and drag event handler
@@ -355,7 +366,9 @@ let ChatComponent = {
         id: id,
         sid: sid,
         stream: null,
-        muted: false
+        muted: false,
+        hasAudio: true,
+        hasVideo: true
       };
       this.pcs.push(pcObject);
 
@@ -403,7 +416,15 @@ let ChatComponent = {
         handshake();
       }
       pc.onaddstream = event => {
-        this.$el.querySelector('#stream-' + id).srcObject = event.stream;
+        let stream = event.stream;
+        pcObject.hasAudio = stream.getAudioTracks().length > 0;
+        pcObject.hasVideo = stream.getVideoTracks().length > 0;
+        this.$el.querySelector('#stream-' + id).srcObject = stream;
+      };
+      pc.onremovestream = event => {
+        pcObject.stream = null;
+        pcObject.hasAudio = false;
+        pcObject.hasVideo = false;
       };
       pc.onicecandidate = event => {
         this.socket.emit('iceCandidate', sid, id, event.candidate);
@@ -487,13 +508,23 @@ let ChatComponent = {
           name: name,
           id: id,
           stream: null,
-          muted: false
+          muted: false,
+          hasAudio: true,
+          hasVideo: true
         };
         this.pcs.push(pcObject);
 
         // listen for stream and ice candidates
         pc.onaddstream = event => {
-          this.$el.querySelector('#stream-' + id).srcObject = event.stream;
+          let stream = event.stream;
+          pcObject.hasAudio = stream.getAudioTracks().length > 0;
+          pcObject.hasVideo = stream.getVideoTracks().length > 0;
+          this.$el.querySelector('#stream-' + id).srcObject = stream;
+        };
+        pc.onremovestream = event => {
+          pcObject.stream = null;
+          pcObject.hasAudio = false;
+          pcObject.hasVideo = false;
         };
         pc.oniceconnectionstatechange = event => {
           if(pc.iceConnectionState == 'disconnected' || pc.iceConnectionState == 'closed') {

@@ -282,6 +282,19 @@ p {
     &#resize-handle {
       cursor: se-resize;
     }
+    &#video-background {
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      left: 0;
+      top: 0;
+      font-size: 5em;
+      border: none;
+      color: $main-color;
+      border-radius: 0;
+      background-color: white;
+      z-index: 0;
+    }
   }
 
   #local-description {
@@ -333,6 +346,8 @@ p {
         width: 100%;
         height: 100%;
         object-fit: cover;
+        position: relative;
+        z-index: 1;
       }
       .video-controls {
         opacity: 0;
@@ -348,18 +363,34 @@ p {
         transition: opacity $transition-length;
         display: flex;
         flex-direction: column;
+        z-index: 2;
 
         &:hover {
           opacity: 1;
         }
-        h1 {
+        .video-details {
           @extend %no-select;
           flex-grow: 1;
           display: flex;
           flex-direction: column;
           justify-content: center;
           text-align: center;
-          color: $accent-color;
+
+          h1 {
+            color: $accent-color;
+          }
+          i {
+            font-size: 1em;
+            color: $medium-main-color;
+            cursor: inherit;
+            border: none;
+            display: inline-block;
+
+            &:hover {
+              background-color: transparent;
+              color: $medium-main-color;
+            }
+          }
         }
         .video-control-buttons {
           display: flex;

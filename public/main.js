@@ -367,8 +367,8 @@ let ChatComponent = {
         sid: sid,
         stream: null,
         muted: false,
-        hasAudio: true,
-        hasVideo: true
+        hasAudio: false,
+        hasVideo: false
       };
       this.pcs.push(pcObject);
 
@@ -509,8 +509,8 @@ let ChatComponent = {
           id: id,
           stream: null,
           muted: false,
-          hasAudio: true,
-          hasVideo: true
+          hasAudio: false,
+          hasVideo: false
         };
         this.pcs.push(pcObject);
 
@@ -562,16 +562,23 @@ let ChatComponent = {
       // stream back
       // if no stream create one
       if(this.stream === null) {
-        navigator.mediaDevices.getUserMedia({
-          video: this.streamOptions.videoStream,
-          audio: this.streamOptions.audioStream
-        })
-          .then(_stream => {
-            this.stream = _stream;
-            pc.addStream(_stream);
+        if(this.streamOptions.videoStream || this.streamOptions.audioStream) {
+          navigator.mediaDevices.getUserMedia({
+            video: this.streamOptions.videoStream,
+            audio: this.streamOptions.audioStream
+          })
+            .then(_stream => {
+              this.stream = _stream;
+              pc.addStream(_stream);
 
-            handshake();
-          });
+              handshake();
+            });
+        } else {
+          this.stream = new MediaStream();
+          pc.addStream(this.stream);
+
+          handshake();
+        }
       }
       // if stream exists use it
       else {

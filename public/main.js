@@ -191,24 +191,31 @@ let ChatComponent = {
       <div id='local-description-text'>
         <h3>Video/Audio Calls</h3>
         <p v-if='pcs.length == 0'>No connected streams. Call someone from the &quot;Members&quot; pane on the left!</p>
-        <div id='stream-options'>
-          <p>
-            Camera: <input type='checkbox' v-model='streamOptions.videoStream'>
-            Microphone: <input type='checkbox' v-model='streamOptions.audioStream'>
-          </p>
-        </div>
       </div>
       <div id='local-description-stream'>
         <video id='stream-local' v-show='stream !== null' autoplay muted></video> 
+        <div id='local-stream-options'>
+          <i
+            :class='[ "fas", "fa-button", "fa-video" + (streamOptions.videoStream ? "" : "-slash") ]'
+            @click='streamOptions.videoStream = !streamOptions.videoStream'
+            :title='"camera " + (streamOptions.videoStream ? "on" : "off")'></i>
+          <i
+            :class='[ "fas", "fa-button", "fa-microphone-alt" + (streamOptions.audioStream ? "" : "-slash") ]'
+            @click='streamOptions.audioStream = !streamOptions.audioStream'
+            :title='"microphone " + (streamOptions.audioStream ? "on" : "off")'></i>
+        </div>
       </div>
     </div>
     <div id='videos'>
-      <div class='video' v-for='pcObject in pcs' @mousedown='beginDrag'>
+      <div class='video' v-for='pcObject in pcs' @mousedown='beginDrag' title='drag video'>
         <video :id='"stream-" + pcObject.id' autoplay></video>
         <div class='video-controls'>
-          <h3>{{ pcObject.name }}</h3>
-          <button @click='disconnect(pcObject)'>Disconnect</button>
-          <div id='resize-handle' @mousedown='beginResize'>&#x1F866;</div>
+          <h1>{{ pcObject.name }}</h1>
+          <div class='video-control-buttons'>
+            <i class='fa-button fas fa-times' @click='disconnect(pcObject)' title='end call'></i>
+            <i :class='[ "fa-button", "fas", "fa-volume-" + (pcObject.muted ? "off" : "up") ]' @click='pcObject.muted = !pcObject.muted' :title='pcObject.muted ? "muted" : "sound on"'></i>
+            <div class='fa-button' id='resize-handle' @mousedown='beginResize' title='resize video'>&#x1F866;</div>
+          </div>
         </div>
       </div>
     </div>
@@ -297,7 +304,7 @@ let ChatComponent = {
   methods: {
     // resize videos
     resize(event) {
-      let elem = this.resizeData.handle.parentElement;
+      let elem = this.resizeData.handle.parentElement.parentElement;
       let elemParent = elem.parentElement;
       let elemPos = elem.getBoundingClientRect();
       elemParent.style.width = elem.style.width = (event.pageX + this.resizeData.right - elemPos.left) + 'px';
@@ -307,8 +314,8 @@ let ChatComponent = {
       let handlePos = event.target.getBoundingClientRect();
       this.resizeData = {
         handle: event.target,
-        right: handlePos.right - event.pageX,
-        bottom: handlePos.bottom - event.pageY
+        right: handlePos.right - event.pageX + 32,
+        bottom: handlePos.bottom - event.pageY + 32
       };
     },
     drag(event) {
@@ -347,7 +354,8 @@ let ChatComponent = {
         name: name,
         id: id,
         sid: sid,
-        stream: null
+        stream: null,
+        muted: false
       };
       this.pcs.push(pcObject);
 
@@ -478,7 +486,8 @@ let ChatComponent = {
           sid: sid,
           name: name,
           id: id,
-          stream: null
+          stream: null,
+          muted: false
         };
         this.pcs.push(pcObject);
 

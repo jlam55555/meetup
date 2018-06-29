@@ -57,6 +57,16 @@ body, html, #app, #container {
 ::placeholder {
   color: $main-color;
 }
+%no-select {
+  // courtesy of https://stackoverflow.com/questions/826782/how-to-disable-text-selection-highlighting
+  -webkit-touch-callout: none; /* iOS Safari */
+    -webkit-user-select: none; /* Safari */
+     -khtml-user-select: none; /* Konqueror HTML */
+       -moz-user-select: none; /* Firefox */
+        -ms-user-select: none; /* Internet Explorer/Edge */
+            user-select: none; /* Non-prefixed version, currently
+                                  supported by Chrome and Opera */
+}
 a.no-link {
   color: inherit;
   text-decoration: none;
@@ -249,19 +259,60 @@ p {
   display: flex;
   flex-direction: column;
 
+  // font awesome special styles
+  .fa-button {
+    @extend %no-select;
+    font-size: 2em;
+    color: $accent-color;
+    border: 1px solid $accent-color;
+    height: 2em;
+    width: 2em;
+    border-radius: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0.75;
+    transition: background-color $transition-length, color $transition-length;
+
+    &:hover {
+      background-color: $accent-color;
+      color: white;
+    }
+    &#resize-handle {
+      cursor: se-resize;
+    }
+  }
+
   #local-description {
     background-color: white;
     display: flex;
     flex-direction: row;
     height: 10em;
+    position: relative;
 
     #local-description-text {
       padding: 1em;
       flex: 1 0 0;
     }
-    #local-description-stream video {
-      display: block;
-      max-height: 10em;
+    #local-description-stream {
+      height: 100%;
+
+      video {
+        display: block;
+        max-height: 100%;
+      }
+      #local-stream-options {
+        position: absolute;
+        right: 0;
+        top: 0;
+        width: 6em;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-around;
+        align-items: center;
+      }
     }
   }
   #videos {
@@ -287,7 +338,7 @@ p {
         opacity: 0;
         width: 100%;
         height: 100%;
-        padding: 1em;
+        padding: 2em;
         background-color: rgba(255, 255, 255, 0.75);
         position: absolute;
         top: 0;
@@ -295,26 +346,25 @@ p {
         cursor: grab;
         cursor: -webkit-grab;
         transition: opacity $transition-length;
+        display: flex;
+        flex-direction: column;
 
         &:hover {
           opacity: 1;
         }
-        #resize-handle {
-          font-size: 2em;
-          padding: 1em;
+        h1 {
+          @extend %no-select;
+          flex-grow: 1;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
           text-align: center;
-          width: 3em;
-          position: absolute;
-          right: 0;
-          bottom: 0;
-          transition: background-color $transition-length, color $transition-length;
-          border-top-left-radius: $border-radius;
-          cursor: se-resize;
-
-          &:hover {
-            background-color: $accent-color;
-            color: $subtle-color;
-          }
+          color: $accent-color;
+        }
+        .video-control-buttons {
+          display: flex;
+          flex-direction: row;
+          justify-content: space-between;
         }
       }
     }

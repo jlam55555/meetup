@@ -421,24 +421,39 @@ p {
   & > :last-child {
     margin-bottom: 0;
   }
-  &#members-group {
-    #members {
-      height: 10em;
-      overflow: auto;
-      background-color: $subtle-color;
-      border: 1px solid $main-color;
-      border-radius: $border-radius;
+  #members {
+    height: 10em;
+    overflow: auto;
+    background-color: $subtle-color;
+    border: 1px solid $main-color;
+    border-radius: $border-radius;
 
-      .member {
-        padding: 1em;
+    .member {
+      padding: 1em;
 
-        &:hover {
-          background-color: white;
-        }
-        &:not(:last-child) {
-          border-bottom: 1px solid $main-color;
-        }
+      &:hover {
+        background-color: white;
       }
+      &:not(:last-child) {
+        border-bottom: 1px solid $main-color;
+      }
+    }
+  }
+  #notification-area {
+    border-radius: $border-radius;
+    min-height: 2em;
+    overflow: auto;
+    background-color: $subtle-color;
+    border: 1px solid $main-color;
+    padding: 1em;
+
+    .notification-text {
+      margin-bottom: 1em;
+    }
+    .notification-actions {
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
     }
   }
   &#chat-group {

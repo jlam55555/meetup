@@ -23,6 +23,41 @@ let iceServers = { iceServers: [
   { url: 'turn:192.158.29.39:3478?transport=tcp', credential: 'JZEOEt2V3Qb0y27GRntt2u2PAYA=', username: '28224511:1379330808' }
 ] };
 
+// button action class
+let Action = function(text, fn) {
+  this.text = text;
+  this.fn = fn;
+};
+// notification just has text (no button)
+let Notification = function(text) {
+  this.text = text;
+};
+// simple notification has a single button to close
+let SimpleNotification = function(text) {
+  Notification.call(this, text);
+  
+  this.actions = [
+    new Action('Close', notifications => {
+      notifications.shift();
+    })
+  ];
+};
+// confirm notification has two buttons: 'confirm' or 'cancel'
+let ConfirmNotification = function(text, confirmFn, cancelFn) {
+  Notification.call(this, text);
+  
+  this.actions = [
+    new Action('Confirm', notifications => {
+      notifications.shift();
+      confirmFn();
+    }),
+    new Action('Cancel', notifications => {
+      notifications.shift();
+      cancelFn();
+    })
+  ];
+};
+
 // component to get name
 let IntroComponent = {
   template: `<div id='container'>
@@ -156,18 +191,34 @@ let ChatComponent = {
                 @click='updateDescription'>Update</button>
             </td>
           </tr>
+          <tr>
+            <th scope='row'>Members ({{ channelData.members.length }})</th>
+            <td>
+              <div id='members'>
+                <div class='member' v-for='member in channelData.members'>
+                  <span>
+                    {{ member.name }}
+                    <strong v-if='member.sid === sid'>(you)</strong>
+                  </span>
+                  <button v-if='member.sid !== sid' @click='call(member.name, member.sid)'>Call</button>
+                </div>
+              </div>
+            </td>
+          </tr>
         </tbody>
       </table>
     </div>
-    <div class='group' id='members-group'>
-      <h3>Members ({{ channelData.members.length }})</h3>
-      <div id='members'>
-        <div class='member' v-for='member in channelData.members'>
-          <span>
-            {{ member.name }}
-            <strong v-if='member.sid === sid'>(you)</strong>
-          </span>
-          <button v-if='member.sid !== sid' @click='call(member.name, member.sid)'>Call</button>
+    <div class='group'>
+      <h3>Notifications ({{ notifications.length }})</h3>
+      <div id='notification-area'>
+        <div v-if='notifications.length == 0'>
+          <div class='notification-body'>All good! No new notifications.</div>
+        </div>
+        <div v-else>
+          <div class='notification-text'>{{ notifications[0].text }}</div>
+          <div class='notification-actions'>
+            <button v-for='action of notifications[0].actions' @click='action.fn(notifications)'>{{ action.text }}</button>
+          </div>
         </div>
       </div>
     </div>
@@ -246,7 +297,9 @@ let ChatComponent = {
       pcs: [],
       // resize and drag event handler
       resizeData: { handle: null, right: 0, bottom: 0 },
-      dragData: { elem: null, left: 0, top: 0 }
+      dragData: { elem: null, left: 0, top: 0 },
+      // notifications
+      notifications: []
     };
   },
   props: {
@@ -281,8 +334,13 @@ let ChatComponent = {
                 pc.setLocalDescription(offer);
 
                 // ask for response from websocket
-                this.socket.emit('createOffer', pcObject.sid, pcObject.id, offer, success => {
-                  pc.setRemoteDescription(success);
+                this.socket.emit('createOffer', pcObject.sid, pcObject.id, offer, answer => {
+                  if(answer.success) {
+                    pc.setRemoteDescription(answer.answer);
+                  } else {
+                    console.log('no success! =(. Error: ' + answer.error);
+                    this.disconnect(pcObject);
+                  }
                 });
               });
               
@@ -357,26 +415,61 @@ let ChatComponent = {
     disconnect(pcObject) {
       pcObject.pc.close();
     },
-    call(name, sid) {
-      if(this.pcs.find(pcObject => pcObject.sid === sid) !== undefined) {
-        return console.log('Cannot have multiple open calls with the same person.');
-      } else if(this.pcs.length > 4) {
-        return console.log('Cannot have more than four open calls (for the sake of your own bandwidth).');
-      }
-
-      let pc = new RTCPeerConnection(iceServers);
-      let id = Math.floor(Math.random() * 1e7);
-      let pcObject = {
+    // create rtc peer connection object
+    createPc(name, sid, id) { 
+      pc = new RTCPeerConnection(iceServers);
+      pcObject = {
         pc: pc,
+        sid: sid,
         name: name,
         id: id,
-        sid: sid,
         stream: null,
         muted: false,
         hasAudio: false,
         hasVideo: false
       };
       this.pcs.push(pcObject);
+
+      // listen for stream and ice candidates
+      pc.onaddstream = event => {
+        let stream = event.stream;
+        pcObject.hasAudio = stream.getAudioTracks().length > 0;
+        pcObject.hasVideo = stream.getVideoTracks().length > 0;
+        this.$el.querySelector('#stream-' + id).srcObject = stream;
+      };
+      pc.onremovestream = event => {
+        pcObject.stream = null;
+        pcObject.hasAudio = false;
+        pcObject.hasVideo = false;
+      };
+      pc.oniceconnectionstatechange = event => {
+        if(pc.iceConnectionState == 'disconnected' || pc.iceConnectionState == 'closed') {
+          pc.closeStreams();
+        }
+      };
+      pc.closeStreams = () => {
+        this.pcs.splice(this.pcs.indexOf(pcObject), 1);
+        if(this.pcs.length === 0 && this.stream !== null) {
+          this.stream.getTracks().forEach(track => track.stop());
+          this.stream = null;
+        }
+      }
+      pc.onicecandidate = event => {
+        this.socket.emit('iceCandidate', sid, id, event.candidate);
+      };
+
+      return pcObject;
+    },
+    call(name, sid) {
+      if(this.pcs.find(pcObject => pcObject.sid === sid) !== undefined) {
+        return console.log('Cannot have multiple open calls with the same person.');
+      } else if(this.pcs.length > 4) {
+        return console.log('Cannot have more than four open calls.');
+      }
+
+      let id = Math.floor(Math.random() * 1e7);
+      let pcObject = this.createPc(name, sid, id);
+      let pc = pcObject.pc;
 
       // handshake
       let handshake = () => {
@@ -390,8 +483,14 @@ let ChatComponent = {
             pc.setLocalDescription(offer);
 
             // ask for response from websocket
-            this.socket.emit('createOffer', sid, id, offer, success => {
-              pc.setRemoteDescription(success);
+            this.socket.emit('createOffer', sid, id, offer, answer => {
+              if(answer.success) {
+                pc.setRemoteDescription(answer.answer);
+              } else {
+                this.notifications.push(new SimpleNotification(answer.error));
+                this.disconnect(pcObject);
+                pc.closeStreams();
+              }
             });
           });
       };
@@ -421,29 +520,6 @@ let ChatComponent = {
         pc.addStream(this.stream);
         handshake();
       }
-      pc.onaddstream = event => {
-        let stream = event.stream;
-        pcObject.hasAudio = stream.getAudioTracks().length > 0;
-        pcObject.hasVideo = stream.getVideoTracks().length > 0;
-        this.$el.querySelector('#stream-' + id).srcObject = stream;
-      };
-      pc.onremovestream = event => {
-        pcObject.stream = null;
-        pcObject.hasAudio = false;
-        pcObject.hasVideo = false;
-      };
-      pc.onicecandidate = event => {
-        this.socket.emit('iceCandidate', sid, id, event.candidate);
-      };
-      pc.oniceconnectionstatechange = event => {
-        if(pc.iceConnectionState == 'disconnected' || pc.iceConnectionState == 'closed') {
-          this.pcs.splice(this.pcs.indexOf(pcObject), 1);
-          if(this.pcs.length === 0 && this.stream !== null) {
-            this.stream.getTracks().forEach(track => track.stop());
-            this.stream = null;
-          }
-        }
-      };
     }
   },
   filters: {
@@ -508,48 +584,18 @@ let ChatComponent = {
       let existingPcObject = this.pcs.find(pcObject => pcObject.id === id);
       if(existingPcObject === undefined) {
         if(this.pcs.find(pcObject => pcObject.sid === sid) !== undefined) {
-          return console.log('Cannot have multiple open calls with the same person.');
+          return cb({ success: false, error: 'Cannot have multiple calls with the same person.' });
         } else if(this.pcs.length > 4) {
-          return console.log('Cannot have more than four open calls (for the sake of your own bandwidth).');
+          return cb({ success: false, error: 'Cannot have more than four open calls.' });
         }
+        this.notifications.push(new ConfirmNotification(name + ' wants to call you!',
+          // success! commence the call
+          () => { console.log('confirmed!') },
+          // reject the call
+          () => cb({ success: false, error: 'Call declined.' })));
 
-        pc = new RTCPeerConnection(iceServers);
-        pcObject = {
-          pc: pc,
-          sid: sid,
-          name: name,
-          id: id,
-          stream: null,
-          muted: false,
-          hasAudio: false,
-          hasVideo: false
-        };
-        this.pcs.push(pcObject);
-
-        // listen for stream and ice candidates
-        pc.onaddstream = event => {
-          let stream = event.stream;
-          pcObject.hasAudio = stream.getAudioTracks().length > 0;
-          pcObject.hasVideo = stream.getVideoTracks().length > 0;
-          this.$el.querySelector('#stream-' + id).srcObject = stream;
-        };
-        pc.onremovestream = event => {
-          pcObject.stream = null;
-          pcObject.hasAudio = false;
-          pcObject.hasVideo = false;
-        };
-        pc.oniceconnectionstatechange = event => {
-          if(pc.iceConnectionState == 'disconnected' || pc.iceConnectionState == 'closed') {
-            this.pcs.splice(this.pcs.indexOf(pcObject), 1);
-            if(this.pcs.length === 0 && this.stream !== null) {
-              this.stream.getTracks().forEach(track => track.stop());
-              this.stream = null;
-            }
-          }
-        };
-        pc.onicecandidate = event => {
-          this.socket.emit('iceCandidate', sid, id, event.candidate);
-        };
+        pcObject = this.createPc(name, sid, id);
+        pc = pcObject.pc;
       }
       // otherwise use existing pc object
       else {
@@ -567,7 +613,7 @@ let ChatComponent = {
         })
           .then(answer => {
             pc.setLocalDescription(answer);
-            cb(answer);
+            cb({ success: true, answer: answer });
           });
       };
 

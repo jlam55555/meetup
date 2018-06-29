@@ -336,18 +336,31 @@ p {
   margin-bottom: 1em; }
   .group > :last-child {
     margin-bottom: 0; }
-  .group#members-group #members {
+  .group #members {
     height: 10em;
     overflow: auto;
     background-color: whitesmoke;
     border: 1px solid lightgrey;
     border-radius: 4px; }
-    .group#members-group #members .member {
+    .group #members .member {
       padding: 1em; }
-      .group#members-group #members .member:hover {
+      .group #members .member:hover {
         background-color: white; }
-      .group#members-group #members .member:not(:last-child) {
+      .group #members .member:not(:last-child) {
         border-bottom: 1px solid lightgrey; }
+  .group #notification-area {
+    border-radius: 4px;
+    min-height: 2em;
+    overflow: auto;
+    background-color: whitesmoke;
+    border: 1px solid lightgrey;
+    padding: 1em; }
+    .group #notification-area .notification-text {
+      margin-bottom: 1em; }
+    .group #notification-area .notification-actions {
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between; }
   .group#chat-group {
     flex: 1 0 15em;
     display: flex;

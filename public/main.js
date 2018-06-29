@@ -432,7 +432,7 @@ let ChatComponent = {
       pc.oniceconnectionstatechange = event => {
         if(pc.iceConnectionState == 'disconnected' || pc.iceConnectionState == 'closed') {
           this.pcs.splice(this.pcs.indexOf(pcObject), 1);
-          if(this.pcs.length === 0) {
+          if(this.pcs.length === 0 && this.stream !== null) {
             this.stream.getTracks().forEach(track => track.stop());
             this.stream = null;
           }
@@ -529,7 +529,7 @@ let ChatComponent = {
         pc.oniceconnectionstatechange = event => {
           if(pc.iceConnectionState == 'disconnected' || pc.iceConnectionState == 'closed') {
             this.pcs.splice(this.pcs.indexOf(pcObject), 1);
-            if(this.pcs.length === 0) {
+            if(this.pcs.length === 0 && this.stream !== null) {
               this.stream.getTracks().forEach(track => track.stop());
               this.stream = null;
             }

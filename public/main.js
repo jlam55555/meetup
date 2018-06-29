@@ -164,11 +164,13 @@ let ChatComponent = {
   <div id='channel-media'>
     <div id='local-description'>
       <div id='local-description-text'>
-        <h3>Video/Audio Streams</h3>
-        <p v-if='pcs.length == 0'>No connected streams. Create one on the left!</p>
+        <h3>Video/Audio Calls</h3>
+        <p v-if='pcs.length == 0'>No connected streams. Call someone from the &quot;Members&quot; pane on the left!</p>
         <div id='stream-options'>
-          <p>Video: <input type='checkbox' v-model='streamOptions.videoStream'></p>
-          <p>Audio: <input type='checkbox' v-model='streamOptions.audioStream'></p>
+          <p>
+            Camera: <input type='checkbox' v-model='streamOptions.videoStream'>
+            Microphone: <input type='checkbox' v-model='streamOptions.audioStream'>
+          </p>
         </div>
       </div>
       <div id='local-description-stream'>
@@ -176,10 +178,13 @@ let ChatComponent = {
       </div>
     </div>
     <div id='videos'>
-      <div class='video' v-for='pcObject in pcs'>
-        <h3>{{ pcObject.name }}</h3>
+      <div class='video' v-for='pcObject in pcs' @mousedown='beginDrag'>
         <video :id='"stream-" + pcObject.id' autoplay></video>
-        <button @click='disconnect(pcObject)'>Disconnect</button>
+        <div class='video-controls'>
+          <h3>{{ pcObject.name }}</h3>
+          <button @click='disconnect(pcObject)'>Disconnect</button>
+          <div id='resize-handle' @mousedown='beginResize'></div>
+        </div>
       </div>
     </div>
   </div>
@@ -193,12 +198,12 @@ let ChatComponent = {
       message: '',
       messages: [],
       // video/audio chat webrtc peer connections
-      streamOptions: {
-        videoStream: true,
-        audioStream: false
-      },
+      streamOptions: { videoStream: true, audioStream: false },
       stream: null,
-      pcs: []
+      pcs: [],
+      // resize and drag event handler
+      resizeData: { handle: null, right: 0, bottom: 0 },
+      dragData: { elem: null, left: 0, top: 0 }
     };
   },
   props: {
@@ -265,6 +270,38 @@ let ChatComponent = {
     }
   },
   methods: {
+    // resize videos
+    resize(event) {
+      let elem = this.resizeData.handle.parentElement;
+      let elemParent = elem.parentElement;
+      let elemPos = elem.getBoundingClientRect();
+      elemParent.style.width = elem.style.width = (event.pageX + this.resizeData.right - elemPos.left) + 'px';
+      elemParent.style.height = elem.style.height = (event.pageY + this.resizeData.bottom - elemPos.top) + 'px';
+    },
+    beginResize(event) {
+      let handlePos = event.target.getBoundingClientRect();
+      this.resizeData = {
+        handle: event.target,
+        right: handlePos.right - event.pageX,
+        bottom: handlePos.bottom - event.pageY
+      };
+    },
+    drag(event) {
+      this.dragData.elem.style.left = (event.pageX - this.dragData.left) + 'px';
+      this.dragData.elem.style.top = (event.pageY - this.dragData.top) + 'px';
+    },
+    beginDrag(event) {
+      let elem = event.target;
+      while(!elem.classList.contains('video')) {
+        elem = elem.parentElement;
+      }
+      let videoPos = elem.getBoundingClientRect();
+      this.dragData = {
+        elem: elem,
+        left: event.pageX - videoPos.left,
+        top: event.pageY - videoPos.top
+      };
+    },
     sendMessage() {
       if(this.message.trim() !== '') {
         this.socket.emit('sendMessage', this.message.trim());
@@ -358,8 +395,25 @@ let ChatComponent = {
       }).format(new Date(time));
     }
   },
-  // set up members and socket handlers
+  // set up members, socket handlers, event handlers
   created() {
+    // set up resize and drag handlers
+    document.addEventListener('mousemove', event => {
+      if(this.resizeData.handle) {
+        this.resize(event);
+      } else if(this.dragData.elem) {
+        this.drag(event);
+      }
+    });
+    document.addEventListener('mouseup', () => {
+      if(this.resizeData.handle) {
+        this.resizeData.handle = null;
+      }
+      if(this.dragData.elem) {
+        this.dragData.elem = null;
+      }
+    });
+
     // channel data (now dynamic)
     this.socket.emit('_channelData');
     this.socket.on('_channelData', _channelData => {

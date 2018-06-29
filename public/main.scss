@@ -271,11 +271,12 @@ p {
 
     .video {
       border: 1px solid $main-color;
+      border-radius: $border-radius;
       width: 30em;
       height: 20em;
-      background-color: green;
       position: absolute;
       overflow: hidden;
+      border: 1px solid $main-color;
 
       video {
         width: 100%;
@@ -286,22 +287,34 @@ p {
         opacity: 0;
         width: 100%;
         height: 100%;
-        background-color: rgba(255, 255, 255, 0.5);
+        padding: 1em;
+        background-color: rgba(255, 255, 255, 0.75);
         position: absolute;
         top: 0;
         left: 0;
+        cursor: grab;
+        cursor: -webkit-grab;
         transition: opacity $transition-length;
 
         &:hover {
           opacity: 1;
         }
         #resize-handle {
-          width: 2em;
-          height: 2em;
+          font-size: 2em;
+          padding: 1em;
+          text-align: center;
+          width: 3em;
           position: absolute;
           right: 0;
           bottom: 0;
-          background-color: blue;
+          transition: background-color $transition-length, color $transition-length;
+          border-top-left-radius: $border-radius;
+          cursor: se-resize;
+
+          &:hover {
+            background-color: $accent-color;
+            color: $subtle-color;
+          }
         }
       }
     }

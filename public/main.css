@@ -213,11 +213,12 @@ p {
     background-color: whitesmoke; }
     #channel-media #videos .video {
       border: 1px solid lightgrey;
+      border-radius: 4px;
       width: 30em;
       height: 20em;
-      background-color: green;
       position: absolute;
-      overflow: hidden; }
+      overflow: hidden;
+      border: 1px solid lightgrey; }
       #channel-media #videos .video video {
         width: 100%;
         height: 100%;
@@ -226,20 +227,30 @@ p {
         opacity: 0;
         width: 100%;
         height: 100%;
-        background-color: rgba(255, 255, 255, 0.5);
+        padding: 1em;
+        background-color: rgba(255, 255, 255, 0.75);
         position: absolute;
         top: 0;
         left: 0;
+        cursor: grab;
+        cursor: -webkit-grab;
         transition: opacity 0.2s; }
         #channel-media #videos .video .video-controls:hover {
           opacity: 1; }
         #channel-media #videos .video .video-controls #resize-handle {
-          width: 2em;
-          height: 2em;
+          font-size: 2em;
+          padding: 1em;
+          text-align: center;
+          width: 3em;
           position: absolute;
           right: 0;
           bottom: 0;
-          background-color: blue; }
+          transition: background-color 0.2s, color 0.2s;
+          border-top-left-radius: 4px;
+          cursor: se-resize; }
+          #channel-media #videos .video .video-controls #resize-handle:hover {
+            background-color: dodgerblue;
+            color: whitesmoke; }
 
 .group {
   color: darkslategrey;

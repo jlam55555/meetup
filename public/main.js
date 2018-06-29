@@ -183,7 +183,7 @@ let ChatComponent = {
         <div class='video-controls'>
           <h3>{{ pcObject.name }}</h3>
           <button @click='disconnect(pcObject)'>Disconnect</button>
-          <div id='resize-handle' @mousedown='beginResize'></div>
+          <div id='resize-handle' @mousedown='beginResize'>&#x1F866;</div>
         </div>
       </div>
     </div>

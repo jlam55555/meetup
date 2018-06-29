@@ -107,6 +107,16 @@ button, select {
       color: $accent-color;
     }
   }
+  // disabled (buttons)
+  &[disabled] {
+    color: $main-color;
+    border-color: $main-color;
+
+    &:hover, &:focus, &:active {
+      color: $main-color;
+      background-color: transparent;
+    }
+  }
 }
 fieldset {
   border: 1px solid white;

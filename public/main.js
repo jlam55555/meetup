@@ -358,6 +358,12 @@ let ChatComponent = {
       pcObject.pc.close();
     },
     call(name, sid) {
+      if(this.pcs.find(pcObject => pcObject.sid === sid) !== undefined) {
+        return console.log('Cannot have multiple open calls with the same person.');
+      } else if(this.pcs.length > 4) {
+        return console.log('Cannot have more than four open calls (for the sake of your own bandwidth).');
+      }
+
       let pc = new RTCPeerConnection(iceServers);
       let id = Math.floor(Math.random() * 1e7);
       let pcObject = {
@@ -501,6 +507,12 @@ let ChatComponent = {
       // check for existing pc object (for renegotiation
       let existingPcObject = this.pcs.find(pcObject => pcObject.id === id);
       if(existingPcObject === undefined) {
+        if(this.pcs.find(pcObject => pcObject.sid === sid) !== undefined) {
+          return console.log('Cannot have multiple open calls with the same person.');
+        } else if(this.pcs.length > 4) {
+          return console.log('Cannot have more than four open calls (for the sake of your own bandwidth).');
+        }
+
         pc = new RTCPeerConnection(iceServers);
         pcObject = {
           pc: pc,

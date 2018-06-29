@@ -83,6 +83,12 @@ button, select {
     button.alt:hover, button.alt:focus, button.alt:active, select.alt:hover, select.alt:focus, select.alt:active {
       background-color: white;
       color: dodgerblue; }
+  button[disabled], select[disabled] {
+    color: lightgrey;
+    border-color: lightgrey; }
+    button[disabled]:hover, button[disabled]:focus, button[disabled]:active, select[disabled]:hover, select[disabled]:focus, select[disabled]:active {
+      color: lightgrey;
+      background-color: transparent; }
 
 fieldset {
   border: 1px solid white;

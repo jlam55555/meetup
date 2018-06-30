@@ -325,26 +325,8 @@ let ChatComponent = {
             pc.addStream(this.stream);
 
             // redo handshake
-            pc.createOffer({
-              offerToReceiveAudio: true,
-              offerToReceiveVideo: true
-            })
-              .then(offer => {
-                // set local description
-                pc.setLocalDescription(offer);
-
-                // ask for response from websocket
-                this.socket.emit('createOffer', pcObject.sid, pcObject.id, offer, answer => {
-                  if(answer.success) {
-                    pc.setRemoteDescription(answer.answer);
-                  } else {
-                    console.log('no success! =(. Error: ' + answer.error);
-                    this.disconnect(pcObject);
-                  }
-                });
-              });
-              
-            });
+            pc.negotiateOffer();
+          });
         };
 
         // get stream before updating pcs
@@ -457,22 +439,7 @@ let ChatComponent = {
       pc.onicecandidate = event => {
         this.socket.emit('iceCandidate', sid, id, event.candidate);
       };
-
-      return pcObject;
-    },
-    call(name, sid) {
-      if(this.pcs.find(pcObject => pcObject.sid === sid) !== undefined) {
-        return console.log('Cannot have multiple open calls with the same person.');
-      } else if(this.pcs.length > 4) {
-        return console.log('Cannot have more than four open calls.');
-      }
-
-      let id = Math.floor(Math.random() * 1e7);
-      let pcObject = this.createPc(name, sid, id);
-      let pc = pcObject.pc;
-
-      // handshake
-      let handshake = () => {
+      pc.negotiateOffer = () => {
         // begin handshake
         pc.createOffer({
           offerToReceiveAudio: true,
@@ -494,6 +461,31 @@ let ChatComponent = {
             });
           });
       };
+      pc.negotiateAnswer = (offer, cb) => {
+        // create answer
+        pc.setRemoteDescription(offer);
+        pc.createAnswer({
+          offerToReceiveAudio: true,
+          offerToReceiveVideo: true
+        })
+          .then(answer => {
+            pc.setLocalDescription(answer);
+            cb({ success: true, answer: answer });
+          });
+      };
+
+      return pcObject;
+    },
+    call(name, sid) {
+      if(this.pcs.find(pcObject => pcObject.sid === sid) !== undefined) {
+        return console.log('Cannot have multiple open calls with the same person.');
+      } else if(this.pcs.length > 4) {
+        return console.log('Cannot have more than four open calls.');
+      }
+
+      let id = Math.floor(Math.random() * 1e7);
+      let pcObject = this.createPc(name, sid, id);
+      let pc = pcObject.pc;
 
       // if no stream create stream
       if(this.stream == null) {
@@ -506,19 +498,19 @@ let ChatComponent = {
               this.stream = _stream;
               pc.addStream(_stream);
 
-              handshake();
+              pc.negotiateOffer();
             });
         } else {
           this.stream = new MediaStream();
           pc.addStream(this.stream);
 
-          handshake();
+          pc.negotiateOffer();
         }
       }
       // if stream exists use it
       else {
         pc.addStream(this.stream);
-        handshake();
+        pc.negotiateOffer();
       }
     }
   },
@@ -603,20 +595,6 @@ let ChatComponent = {
         pc = pcObject.pc;
       }
 
-      // handshake
-      let handshake = () => {
-        // create answer
-        pc.setRemoteDescription(offer);
-        pc.createAnswer({
-          offerToReceiveAudio: true,
-          offerToReceiveVideo: true
-        })
-          .then(answer => {
-            pc.setLocalDescription(answer);
-            cb({ success: true, answer: answer });
-          });
-      };
-
       // stream back
       // if no stream create one
       if(this.stream === null) {
@@ -629,19 +607,19 @@ let ChatComponent = {
               this.stream = _stream;
               pc.addStream(_stream);
 
-              handshake();
+              pc.negotiateAnswer(offer, cb);
             });
         } else {
           this.stream = new MediaStream();
           pc.addStream(this.stream);
 
-          handshake();
+          pc.negotiateAnswer(offer, cb);
         }
       }
       // if stream exists use it
       else {
         pc.addStream(this.stream);
-        handshake();
+        pc.negotiateAnswer(offer, cb);
       }
     });
   },

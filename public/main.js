@@ -226,9 +226,9 @@ let ChatComponent = {
       <h3>Chat</h3>
       <div id='chat'>
         <div class='message' v-if='messages.length == 0'>No messages yet.</div>
-        <div class='message' :class='{ "is-author": message.sid == sid }' v-for='message in messages'>
+        <div class='message' :class='{ "is-author": message.sid === sid, "is-server": message.author === null }' v-for='message in messages'>
           <div class='message-body'>{{ message.body }}</div>
-          <div class='message-details'>{{ message.sid == sid ? 'You' : message.author }} | {{ message.time | timeString }}</div>
+          <div class='message-details'>{{ message.sid == sid ? 'You' : message.author }}{{message.author !== null ? ' | ' : '' }}{{ message.time | timeString }}</div>
         </div>
       </div>
       <div id='message-input'>
@@ -543,7 +543,14 @@ let ChatComponent = {
 
     // messages (dynamic)
     this.socket.emit('_messages');
-    this.socket.on('_messages', _messages => this.messages = _messages);
+    this.socket.on('_messages', _messages => {
+      this.messages = _messages;
+      // automatic scrolling if at bottom
+      let elem = this.$el.querySelector('#chat');
+      if(elem.scrollHeight - elem.scrollTop === elem.clientHeight) {
+        this.$nextTick(() => elem.scrollTop = elem.scrollHeight - elem.clientHeight);
+      }
+    });
 
     // respond to ice candidate
     let waitForLocalDescription = (pc, candidate) => {
@@ -562,7 +569,18 @@ let ChatComponent = {
 
     // respond to call offer
     this.socket.on('callOffer', (name, sid, id, offer, cb) => {
+
       let pc, pcObject;
+      // commence streaming back
+      let returnAnswer = () => {
+        this.getStream()
+          .then(_stream => {
+            this.stream = _stream;
+            pc.addStream(_stream);
+
+            pc.negotiateAnswer(offer, cb);
+          });
+      };
 
       // check for existing pc object (for renegotiation
       let existingPcObject = this.pcs.find(pcObject => pcObject.id === id);
@@ -572,29 +590,29 @@ let ChatComponent = {
         } else if(this.pcs.length > 4) {
           return cb({ success: false, error: 'Cannot have more than four open calls.' });
         }
-        this.notifications.push(new ConfirmNotification(name + ' wants to call you!',
-          // success! commence the call
-          () => { console.log('confirmed!') },
-          // reject the call
-          () => cb({ success: false, error: 'Call declined.' })));
 
         pcObject = this.createPc(name, sid, id);
         pc = pcObject.pc;
+
+        this.notifications.push(
+          new ConfirmNotification(name + ' wants to call you!',
+            // success! commence the call
+            () => returnAnswer(),
+            // reject the call
+            () => {
+              this.disconnect(pcObject);
+              cb({ success: false, error: 'Call declined.' });
+            }
+          )
+        );
       }
       // otherwise use existing pc object
       else {
         pcObject = existingPcObject;
         pc = pcObject.pc;
+        returnAnswer();
       }
 
-      // stream back
-      this.getStream()
-        .then(_stream => {
-          this.stream = _stream;
-          pc.addStream(_stream);
-
-          pc.negotiateAnswer(offer, cb);
-        });
     });
   },
   // when closed close all calls

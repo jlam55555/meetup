@@ -470,16 +470,16 @@ p {
       background-color: $subtle-color;
 
       .message {
-        padding: 1em;
+        padding: 0.5em 1em;
         display: flex;
         flex-direction: column;
 
         .message-body {
           width: 80%;
-          padding: 1em;
+          padding: 0.75em 1em;
           border-radius: $border-radius;
           background-color: white;
-          margin-bottom: 0.75em;
+          margin-bottom: 0.5em;
         }
         .message-details {
           font-size: smaller;
@@ -492,6 +492,16 @@ p {
           .message-body {
             background-color: $dark-main-color;
             color: $subtle-color;
+          }
+        }
+        &.is-server {
+          align-items: center;
+          text-align: center;
+          color: $medium-main-color;
+
+          .message-body {
+            background-color: transparent;
+            margin-bottom: 0;
           }
         }
       }

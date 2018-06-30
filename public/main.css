@@ -373,15 +373,15 @@ p {
       border: 1px solid lightgrey;
       background-color: whitesmoke; }
       .group#chat-group #chat .message {
-        padding: 1em;
+        padding: 0.5em 1em;
         display: flex;
         flex-direction: column; }
         .group#chat-group #chat .message .message-body {
           width: 80%;
-          padding: 1em;
+          padding: 0.75em 1em;
           border-radius: 4px;
           background-color: white;
-          margin-bottom: 0.75em; }
+          margin-bottom: 0.5em; }
         .group#chat-group #chat .message .message-details {
           font-size: smaller;
           color: grey;
@@ -391,6 +391,13 @@ p {
           .group#chat-group #chat .message.is-author .message-body {
             background-color: darkslategrey;
             color: whitesmoke; }
+        .group#chat-group #chat .message.is-server {
+          align-items: center;
+          text-align: center;
+          color: grey; }
+          .group#chat-group #chat .message.is-server .message-body {
+            background-color: transparent;
+            margin-bottom: 0; }
     .group#chat-group #message-input {
       flex: 0 0 auto;
       width: 100%;

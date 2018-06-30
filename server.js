@@ -32,6 +32,9 @@ let Message = function(body, author, sid, time) {
   this.sid = sid;
   this.time = time;
 }
+let ServerMessage = function(body) {
+  Message.call(this, body, null, null, new Date());
+}
 let Channel = function(name, key) {
   // set name and key
   this.name = name;
@@ -51,6 +54,8 @@ let Channel = function(name, key) {
       io.sockets.sockets[sid].join(this.name);
       this.members.push(new Member(io.sockets.sockets[sid].data.name, sid));
       this.sendChannelData();
+      this.messages.push(new ServerMessage(io.sockets.sockets[sid].data.name + ' has joined the channel.'));
+      io.to(this.name).emit('_messages', this.messages);
       sendChannelsData();
       return true;
     } else {
@@ -60,6 +65,8 @@ let Channel = function(name, key) {
   this.removeMember = function(sid, isDisconnect) {
     let member = this.members.find(member => member.sid === sid);
     this.members.splice(this.members.indexOf(member), 1);
+    this.messages.push(new ServerMessage(member.name + ' has left the channel.'));
+    io.to(this.name).emit('_messages', this.messages);
     if(!isDisconnect) {
       io.sockets.sockets[sid].data.channel = undefined;
     }

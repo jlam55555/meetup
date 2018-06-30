@@ -333,20 +333,13 @@ let ChatComponent = {
         if(this.pcs.length > 0) {
           // stop current stream
           this.stream.getTracks().forEach(track => track.stop());
-          // update this.stream
-          if(newValue.videoStream || newValue.audioStream) {
-            navigator.mediaDevices.getUserMedia({
-              video: newValue.videoStream,
-              audio: newValue.audioStream
-            })
-              .then(_stream => {
-                this.stream = _stream;
-                updatePcs();
-              });
-          } else {
-            this.stream = new MediaStream();
-            updatePcs();
-          }
+          this.stream = null;
+
+          this.getStream()
+            .then(_stream => {
+              this.stream = _stream;
+              updatePcs();
+            });
         }
       },
       deep: true
@@ -476,6 +469,23 @@ let ChatComponent = {
 
       return pcObject;
     },
+    getStream() {
+      // if no stream create stream
+      if(this.stream == null) {
+        if(this.streamOptions.videoStream || this.streamOptions.audioStream) {
+          return navigator.mediaDevices.getUserMedia({
+            video: this.streamOptions.videoStream,
+            audio: this.streamOptions.audioStream
+          });
+        } else {
+          return new Promise((resolve, reject) => resolve(new MediaStream()));
+        }
+      }
+      // if stream exists use it
+      else {
+        return new Promise((resolve, reject) => resolve(this.stream));
+      }
+    },
     call(name, sid) {
       if(this.pcs.find(pcObject => pcObject.sid === sid) !== undefined) {
         return console.log('Cannot have multiple open calls with the same person.');
@@ -487,31 +497,13 @@ let ChatComponent = {
       let pcObject = this.createPc(name, sid, id);
       let pc = pcObject.pc;
 
-      // if no stream create stream
-      if(this.stream == null) {
-        if(this.streamOptions.videoStream || this.streamOptions.audioStream) {
-          navigator.mediaDevices.getUserMedia({
-            video: this.streamOptions.videoStream,
-            audio: this.streamOptions.audioStream
-          })
-            .then(_stream => {
-              this.stream = _stream;
-              pc.addStream(_stream);
-
-              pc.negotiateOffer();
-            });
-        } else {
-          this.stream = new MediaStream();
-          pc.addStream(this.stream);
-
-          pc.negotiateOffer();
-        }
-      }
-      // if stream exists use it
-      else {
-        pc.addStream(this.stream);
+      // get stream
+      this.getStream().then(_stream => {
+        this.stream = _stream;
+        pc.addStream(_stream);
+    
         pc.negotiateOffer();
-      }
+      });
     }
   },
   filters: {
@@ -596,31 +588,13 @@ let ChatComponent = {
       }
 
       // stream back
-      // if no stream create one
-      if(this.stream === null) {
-        if(this.streamOptions.videoStream || this.streamOptions.audioStream) {
-          navigator.mediaDevices.getUserMedia({
-            video: this.streamOptions.videoStream,
-            audio: this.streamOptions.audioStream
-          })
-            .then(_stream => {
-              this.stream = _stream;
-              pc.addStream(_stream);
-
-              pc.negotiateAnswer(offer, cb);
-            });
-        } else {
-          this.stream = new MediaStream();
-          pc.addStream(this.stream);
+      this.getStream()
+        .then(_stream => {
+          this.stream = _stream;
+          pc.addStream(_stream);
 
           pc.negotiateAnswer(offer, cb);
-        }
-      }
-      // if stream exists use it
-      else {
-        pc.addStream(this.stream);
-        pc.negotiateAnswer(offer, cb);
-      }
+        });
     });
   },
   // when closed close all calls

@@ -372,6 +372,11 @@ let ChatComponent = {
     disconnect(pcObject) {
       pcObject.pc.close();
       pcObject.pc.closeStreams();
+      
+      console.log(pcObject.pc.currentRemoteDescription, pcObject.pc.remoteDescription);
+      if(false) {
+        this.socket.emit('sendNotification', pcObject.sid, this.name + ' hung up.', { errorCode: 1 });
+      }
     },
     // create rtc peer connection object
     createPc(name, sid, id) { 
@@ -427,16 +432,13 @@ let ChatComponent = {
 
             // ask for response from websocket
             this.socket.emit('createOffer', sid, id, offer, answer => {
-              if(answer.success) {
-                console.log(pc.connectionState, pc.iceConnectionState);
-                pc.setRemoteDescription(answer.answer)
-                  .catch(err => {
-                    this.socket.emit('sendNotification', sid, 'Oops! ' + name + ' just ended the call.', { errorCode: 1 });
-                  });
-              } else {
+              if(answer.success && pc.iceConnectionState === 'closed') {
+                this.socket.emit('sendNotification', sid, 'Oops! ' + name + ' just ended the call.', { errorCode: 1 });
+              } else if(answer.success) {
+                pc.setRemoteDescription(answer.answer);
+              } else if(pc.iceConnectionState !== 'closed') {
                 this.notifications.unshift(new SimpleNotification(answer.error));
                 this.disconnect(pcObject);
-                pc.closeStreams();
               }
             });
           });
@@ -544,13 +546,11 @@ let ChatComponent = {
     // get notifications
     this.socket.on('_notification', (message, sid, data) => {
       this.notifications.unshift(new SimpleNotification(message));
-      console.log(message, sid, data);
       
       if(data.errorCode) {
         switch(data.errorCode) {
           // error code 1: person hung up, close on this side
           case 1:
-            console.log('testing');
             let pcObject = this.pcs.find(pcObject => pcObject.sid === sid);
             if(pcObject !== undefined) {
               this.disconnect(pcObject);

@@ -245,7 +245,7 @@ let ChatComponent = {
     <div id='videos'>
       <div class='video' v-for='pcObject in pcs' @mousedown='beginDrag' title='drag video'>
         <i :class='[ "fa-button", "fas", pcObject.isConnected ? "fa-user" : "fa-phone-volume" ]' id='video-background'></i>
-        <video :id='"stream-" + pcObject.id' autoplay :muted.prop='pcObject.muted'></video>
+        <video :id='"stream-" + pcObject.id' autoplay :muted.prop='pcObject.muted' v-show='pcObject.hasVideo'></video>
         <div class='video-controls'>
           <div class='video-details'>
             <h1>{{ pcObject.name }}</h1>

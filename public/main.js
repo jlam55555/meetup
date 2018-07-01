@@ -427,12 +427,14 @@ let ChatComponent = {
             // ask for response from websocket
             this.socket.emit('createOffer', sid, id, offer, answer => {
               if(answer.success) {
+                console.log(pc.connectionState);
                 pc.setRemoteDescription(answer.answer)
                   .catch(err => {
-                    this.notifications.push(new SimpleNotification('Oops! ' + name + ' just ended the call.'));
+                    this.socket.emit('sendNotification', sid, 'Oops! ' + name + ' just ended the call.');
+                    //this.notifications.push(new SimpleNotification('Oops! ' + name + ' just ended the call.'));
                   });
               } else {
-                this.notifications.push(new SimpleNotification(answer.error));
+                this.notifications.unshift(new SimpleNotification(answer.error));
                 this.disconnect(pcObject);
                 pc.closeStreams();
               }
@@ -473,10 +475,10 @@ let ChatComponent = {
     },
     call(name, sid) {
       if(this.pcs.find(pcObject => pcObject.sid === sid) !== undefined) {
-        this.notifications.push(new SimpleNotification('You cannot have multiple open calls with the same person (' + name + ').'));
+        this.notifications.unshift(new SimpleNotification('You cannot have multiple open calls with the same person (' + name + ').'));
         return;
       } else if(this.pcs.length > 4) {
-        this.notifications.push(new SimpleNotification('You cannot have more than four open calls.'));
+        this.notifications.unshift(new SimpleNotification('You cannot have more than four open calls.'));
         return;
       }
 
@@ -538,6 +540,11 @@ let ChatComponent = {
         this.$nextTick(() => elem.scrollTop = elem.scrollHeight - elem.clientHeight);
       }
     });
+    
+    // get notifications
+    this.socket.on('_notification', message => {
+      this.notifications.unshift(new SimpleNotification(message));
+    });
 
     // respond to ice candidate
     let waitForLocalDescription = (pc, candidate) => {
@@ -582,7 +589,7 @@ let ChatComponent = {
         pcObject = this.createPc(name, sid, id);
         pc = pcObject.pc;
 
-        this.notifications.push(
+        this.notifications.unshift(
           new ConfirmNotification(name + ' wants to call you!',
             // success! commence the call
             () => returnAnswer(),

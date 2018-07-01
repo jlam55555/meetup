@@ -320,9 +320,11 @@ let ChatComponent = {
 
         // get stream before updating pcs
         if(this.pcs.length > 0) {
-          // stop current stream
-          this.stream.getTracks().forEach(track => track.stop());
-          this.stream = null;
+          // stop current stream (if exists)
+          if(this.stream !== null) {
+            this.stream.getTracks().forEach(track => track.stop());
+            this.stream = null;
+          }
 
           this.getStream()
             .then(_stream => {

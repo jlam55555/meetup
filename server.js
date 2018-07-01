@@ -195,7 +195,7 @@ io.on('connect', socket => {
   });
   
   // send message to specific sid
-  socket.on('sendNotification', (sid, message) => {
+  socket.on('sendNotification', (sid, message, data) => {
     if(socket.data.channel) {
       let channel = channels.get(socket.data.channel);
 
@@ -206,7 +206,7 @@ io.on('connect', socket => {
       }
       
       // send message
-      io.sockets.sockets[sid].emit('_notification', message);
+      io.sockets.sockets[sid].emit('_notification', message, socket.sid, data || {});
     }
   });
 

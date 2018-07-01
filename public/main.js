@@ -371,6 +371,7 @@ let ChatComponent = {
     },
     disconnect(pcObject) {
       pcObject.pc.close();
+      pcObject.pc.closeStreams();
     },
     // create rtc peer connection object
     createPc(name, sid, id) { 
@@ -550,7 +551,7 @@ let ChatComponent = {
           case 1:
             let pcObject = this.pcs.find(pcObject => pcObject.sid === sid);
             if(pcObject !== undefined) {
-              pcObject.pc.closeStreams();
+              this.disconnect(pcObject);
             }
             break;
         }

@@ -427,7 +427,10 @@ let ChatComponent = {
             // ask for response from websocket
             this.socket.emit('createOffer', sid, id, offer, answer => {
               if(answer.success) {
-                pc.setRemoteDescription(answer.answer);
+                pc.setRemoteDescription(answer.answer)
+                  .catch(err => {
+                    this.notifications.push(new SimpleNotification('Oops! ' + name + ' just ended the call.'));
+                  });
               } else {
                 this.notifications.push(new SimpleNotification(answer.error));
                 this.disconnect(pcObject);
@@ -545,8 +548,9 @@ let ChatComponent = {
       }
     };
     this.socket.on('icecandidate', (id, candidate) => {
-      if(candidate !== null) {
-        let pc = this.pcs.find(pc => pc.id === id).pc;
+      let pcObject;
+      if(candidate !== null || (pcObject = this.pcs.find(pcObject => pcObject.id === id)) !== null) {
+        let pc = pbObject.pc;
         waitForLocalDescription(pc, candidate);
       }
     });

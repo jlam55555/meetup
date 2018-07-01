@@ -453,7 +453,7 @@ let ChatComponent = {
     },
     getStream() {
       // if no stream create stream
-      if(this.stream == null) {
+      if(this.stream === null) {
         if(this.streamOptions.videoStream || this.streamOptions.audioStream) {
           return navigator.mediaDevices.getUserMedia({
             video: this.streamOptions.videoStream,
@@ -470,9 +470,9 @@ let ChatComponent = {
     },
     call(name, sid) {
       if(this.pcs.find(pcObject => pcObject.sid === sid) !== undefined) {
-        return console.log('Cannot have multiple open calls with the same person.');
+        return new SimpleNotification('You cannot have multiple open calls with the same person (' + name + ').');
       } else if(this.pcs.length > 4) {
-        return console.log('Cannot have more than four open calls.');
+        return new SimpleNotification('You cannot have more than four open calls.');
       }
 
       let id = Math.floor(Math.random() * 1e7);
@@ -568,9 +568,9 @@ let ChatComponent = {
       let existingPcObject = this.pcs.find(pcObject => pcObject.id === id);
       if(existingPcObject === undefined) {
         if(this.pcs.find(pcObject => pcObject.sid === sid) !== undefined) {
-          return cb({ success: false, error: 'Cannot have multiple calls with the same person.' });
+          return cb({ success: false, error: 'You cannot have multiple calls with the same person (' + this.name + ').' });
         } else if(this.pcs.length > 4) {
-          return cb({ success: false, error: 'Cannot have more than four open calls.' });
+          return cb({ success: false, error: this.name + ' already has four open calls.' });
         }
 
         pcObject = this.createPc(name, sid, id);

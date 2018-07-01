@@ -369,14 +369,13 @@ let ChatComponent = {
     updateDescription() {
       this.socket.emit('*channel.description', this.channelData.description);
     },
-    disconnect(pcObject) {
-      pcObject.pc.close();
-      pcObject.pc.closeStreams();
-      
-      console.log(pcObject.pc.currentRemoteDescription, pcObject.pc.remoteDescription);
-      if(false) {
+    disconnect(pcObject) {      
+      if(pcObject.pc.remoteDescription === undefined || pcObject.pc.remoteDescription.type === '') {
         this.socket.emit('sendNotification', pcObject.sid, this.name + ' hung up.', { errorCode: 1 });
       }
+      
+      pcObject.pc.close();
+      pcObject.pc.closeStreams();
     },
     // create rtc peer connection object
     createPc(name, sid, id) { 

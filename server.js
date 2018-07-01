@@ -206,7 +206,7 @@ io.on('connect', socket => {
       }
       
       // send message
-      io.sockets.sockets[sid].emit('_notification', message, socket.sid, data || {});
+      io.sockets.sockets[sid].emit('_notification', message, socket.id, data || {});
     }
   });
 

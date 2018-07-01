@@ -261,7 +261,7 @@ let ChatComponent = {
           <div class='video-control-buttons'>
             <i class='fa-button fas fa-times' @click='disconnect(pcObject)' title='end call'></i>
             <i :class='[ "fa-button", "fas", "fa-volume-" + (pcObject.muted ? "off" : "up") ]' @click='pcObject.muted = !pcObject.muted' :title='pcObject.muted ? "muted" : "not muted"'></i>
-            <div class='fa-button' id='resize-handle' @mousedown='beginResize' title='resize video'>&#x1F866;</div>
+            <i class='fa-button fas fa-expand' id='resize-handle' @mousedown='beginResize' title='resize video'></i>
           </div>
         </div>
       </div>

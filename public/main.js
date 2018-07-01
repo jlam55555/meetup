@@ -470,9 +470,11 @@ let ChatComponent = {
     },
     call(name, sid) {
       if(this.pcs.find(pcObject => pcObject.sid === sid) !== undefined) {
-        return new SimpleNotification('You cannot have multiple open calls with the same person (' + name + ').');
+        this.notifications.push(new SimpleNotification('You cannot have multiple open calls with the same person (' + name + ').'));
+        return;
       } else if(this.pcs.length > 4) {
-        return new SimpleNotification('You cannot have more than four open calls.');
+        this.notifications.push(new SimpleNotification('You cannot have more than four open calls.'));
+        return;
       }
 
       let id = Math.floor(Math.random() * 1e7);

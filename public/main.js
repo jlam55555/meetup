@@ -388,7 +388,6 @@ let ChatComponent = {
         sid: sid,
         name: name,
         id: id,
-        stream: null,
         muted: false,
         hasAudio: false,
         hasVideo: false,
@@ -402,14 +401,15 @@ let ChatComponent = {
         pcObject.hasAudio = stream.getAudioTracks().length > 0;
         pcObject.hasVideo = stream.getVideoTracks().length > 0;
         this.$el.querySelector('#stream-' + id).srcObject = stream;
+        console.log('created stream', pcObject.hasVideo, pcObject.hasAudio);
       };
       pc.onremovestream = event => {
-        pcObject.stream = null;
+        console.log('remove stream');
         pcObject.hasAudio = false;
         pcObject.hasVideo = false;
       };
       pc.oniceconnectionstatechange = event => {
-        if(pc.iceConnectionState == 'disconnected' || pc.iceConnectionState == 'closed') {
+        if(pc.iceConnectionState === 'disconnected' || pc.iceConnectionState === 'closed') {
           pc.closeStreams();
         }
       };

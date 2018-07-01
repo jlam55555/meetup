@@ -536,7 +536,7 @@ let ChatComponent = {
 
     // respond to ice candidate
     let waitForLocalDescription = (pc, candidate) => {
-      if(pc.localDescription.type === '') {
+      if(pc.localDescription === null || pc.localDescription.type === '') {
         setTimeout(waitForLocalDescription.bind(null, pc, candidate), 100);
       } else {
         pc.addIceCandidate(candidate);

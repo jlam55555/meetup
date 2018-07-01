@@ -549,7 +549,7 @@ let ChatComponent = {
     };
     this.socket.on('icecandidate', (id, candidate) => {
       let pcObject;
-      if(candidate !== null || (pcObject = this.pcs.find(pcObject => pcObject.id === id))) {
+      if(candidate !== null && (pcObject = this.pcs.find(pcObject => pcObject.id === id)) !== undefined) {
         let pc = pcObject.pc;
         waitForLocalDescription(pc, candidate);
       }

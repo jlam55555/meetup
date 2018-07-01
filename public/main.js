@@ -303,6 +303,10 @@ let ChatComponent = {
         // update pc streams
         let updatePcs = () => {
           this.pcs.forEach(pcObject => {
+            // if not connected ignore
+            if(!this.pc.isConnected) return;
+            
+            // remove all existing streams and add this one
             let pc = pcObject.pc;
             pc.getLocalStreams().forEach(localStream => {
               pc.removeStream(localStream);

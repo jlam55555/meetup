@@ -404,9 +404,13 @@ let ChatComponent = {
         console.log('created stream', pcObject.hasVideo, pcObject.hasAudio);
       };
       pc.onremovestream = event => {
-        console.log('remove stream');
-        pcObject.hasAudio = false;
-        pcObject.hasVideo = false;
+        console.log('remove stream test 1');
+        // only make hasAudio and hasVideo equal to false if no open streams
+        if(pc.getRemoteStreams().length === 0) {
+          console.log('remove stream test 2');
+          pcObject.hasAudio = false;
+          pcObject.hasVideo = false;
+        }
       };
       pc.oniceconnectionstatechange = event => {
         if(pc.iceConnectionState === 'disconnected' || pc.iceConnectionState === 'closed') {

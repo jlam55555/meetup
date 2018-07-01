@@ -553,12 +553,14 @@ let ChatComponent = {
         switch(data.errorCode) {
           // error code 1: person hung up, close on this side, close call notification
           case 1:
+            // remove call notification (data: {type: 'confirm', sid: sid})
+            console.log(this.notifications);
+            this.notifications = this.notifications.filter(notification => notification.data.sid !== sid || notification.data.type !== 'confirm');
+            
             let pcObject = this.pcs.find(pcObject => pcObject.sid === sid);
             if(pcObject !== undefined) {
               this.disconnect(pcObject);
             }
-            // remove call notification (data: {type: 'confirm', sid: sid})
-            this.notifications.filter(notification => notification.data.sid !== sid || notification.data.type !== 'confirm');
             break;
         }
       }

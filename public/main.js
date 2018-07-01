@@ -372,9 +372,9 @@ let ChatComponent = {
     updateDescription() {
       this.socket.emit('*channel.description', this.channelData.description);
     },
-    disconnect(pcObject) {      
-      if(pcObject.pc.remoteDescription === undefined || pcObject.pc.remoteDescription.type === '') {
-        this.socket.emit('sendNotification', pcObject.sid, this.name + ' hung up.', { errorCode: 1 });
+    disconnect(pcObject, init = true) {      
+      if(pcObject.pc.remoteDescription === undefined || pcObject.pc.remoteDescription.type === '' && init) {
+        this.socket.emit('sendNotification', pcObject.sid, this.name + ' ended the call.', { errorCode: 1 });
       }
       
       pcObject.pc.close();
@@ -554,12 +554,11 @@ let ChatComponent = {
           // error code 1: person hung up, close on this side, close call notification
           case 1:
             // remove call notification (data: {type: 'confirm', sid: sid})
-            console.log(this.notifications);
             this.notifications = this.notifications.filter(notification => notification.data.sid !== sid || notification.data.type !== 'confirm');
             
             let pcObject = this.pcs.find(pcObject => pcObject.sid === sid);
             if(pcObject !== undefined) {
-              this.disconnect(pcObject);
+              this.disconnect(pcObject, false);
             }
             break;
         }

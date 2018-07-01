@@ -430,8 +430,7 @@ let ChatComponent = {
                 console.log(pc.connectionState);
                 pc.setRemoteDescription(answer.answer)
                   .catch(err => {
-                    this.socket.emit('sendNotification', sid, 'Oops! ' + name + ' just ended the call.');
-                    //this.notifications.push(new SimpleNotification('Oops! ' + name + ' just ended the call.'));
+                    this.socket.emit('sendNotification', sid, 'Oops! ' + name + ' just ended the call.', { errorCode: 1 });
                   });
               } else {
                 this.notifications.unshift(new SimpleNotification(answer.error));
@@ -542,8 +541,20 @@ let ChatComponent = {
     });
     
     // get notifications
-    this.socket.on('_notification', message => {
+    this.socket.on('_notification', (message, sid, data) => {
       this.notifications.unshift(new SimpleNotification(message));
+      
+      if(data.errorCode) {
+        switch(data.errorCode) {
+          // error code 1: person hung up, close on this side
+          case 1:
+            let pcObject = this.pcs.find(pcObject => pcObject.sid === sid);
+            if(pcObject !== undefined) {
+              pcObject.pc.closeStreams();
+            }
+            break;
+        }
+      }
     });
 
     // respond to ice candidate

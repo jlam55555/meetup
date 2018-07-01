@@ -11,12 +11,14 @@ let Action = function(text, fn) {
   this.fn = fn;
 };
 // notification just has text (no button)
-let Notification = function(text) {
+let Notification = function(text, data) {
   this.text = text;
+  this.data = data || {};
 };
 // simple notification has a single button to close
-let SimpleNotification = function(text) {
+let SimpleNotification = function(text, data) {
   Notification.call(this, text);
+  this.data = Object.assign({ type: 'simple' }, data || {});
   
   this.actions = [
     new Action('Close', notifications => {
@@ -25,8 +27,9 @@ let SimpleNotification = function(text) {
   ];
 };
 // confirm notification has two buttons: 'confirm' or 'cancel'
-let ConfirmNotification = function(text, confirmFn, cancelFn) {
+let ConfirmNotification = function(text, confirmFn, cancelFn, data) {
   Notification.call(this, text);
+  this.data = Object.assign({ type: 'confirm' }, data || {});
   
   this.actions = [
     new Action('Confirm', notifications => {
@@ -476,10 +479,10 @@ let ChatComponent = {
     },
     call(name, sid) {
       if(this.pcs.find(pcObject => pcObject.sid === sid) !== undefined) {
-        this.notifications.unshift(new SimpleNotification('You cannot have multiple open calls with the same person (' + name + ').'));
+        this.notifications.unshift(new SimpleNotification('You cannot have multiple open calls with the same person (' + name + ').', { type: 'error' }));
         return;
       } else if(this.pcs.length > 4) {
-        this.notifications.unshift(new SimpleNotification('You cannot have more than four open calls.'));
+        this.notifications.unshift(new SimpleNotification('You cannot have more than four open calls.', { type: 'error' }));
         return;
       }
 
@@ -544,16 +547,18 @@ let ChatComponent = {
     
     // get notifications
     this.socket.on('_notification', (message, sid, data) => {
-      this.notifications.unshift(new SimpleNotification(message));
+      this.notifications.unshift(new SimpleNotification(message, data.errorCode ? { type: 'error' } : {}));
       
       if(data.errorCode) {
         switch(data.errorCode) {
-          // error code 1: person hung up, close on this side
+          // error code 1: person hung up, close on this side, close call notification
           case 1:
             let pcObject = this.pcs.find(pcObject => pcObject.sid === sid);
             if(pcObject !== undefined) {
               this.disconnect(pcObject);
             }
+            // remove call notification (data: {type: 'confirm', sid: sid})
+            this.notifications.filter(notification => notification.data.sid !== sid || notification.data.type !== 'confirm');
             break;
         }
       }
@@ -610,9 +615,8 @@ let ChatComponent = {
             () => {
               this.disconnect(pcObject);
               cb({ success: false, error: 'Call declined.' });
-            }
-          )
-        );
+            },
+            { sid: sid }));
       }
       // otherwise use existing pc object
       else {

@@ -193,6 +193,21 @@ io.on('connect', socket => {
       channel.sendChannelData(socket);
     }
   });
+  
+  // send message to specific sid
+  socket.on('sendNotification', (sid, message) => {
+    if(socket.data.channel) {
+      let channel = channels.get(socket.data.channel);
+
+      // make sure sid exists in channel
+      let callee = channel.members.find(member => member.sid === sid)
+      if(callee === undefined) {
+        return cb(false);
+      }
+      
+      // send message
+      io.sockets.sockets[sid].emit('_notification', message);
+  });
 
   // request call
   socket.on('createOffer', (sid, id, offer, cb) => {

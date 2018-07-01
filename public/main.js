@@ -244,7 +244,7 @@ let ChatComponent = {
     </div>
     <div id='videos'>
       <div class='video' v-for='pcObject in pcs' @mousedown='beginDrag' title='drag video'>
-        <i class='fa-button far fa-user' id='video-background'></i>
+        <i :class='[ "fa-button", "fas", pcObject.isConnected ? "fa-user" : "fa-phone-volume"' id='video-background'></i>
         <video :id='"stream-" + pcObject.id' autoplay :muted.prop='pcObject.muted'></video>
         <div class='video-controls'>
           <div class='video-details'>
@@ -391,7 +391,8 @@ let ChatComponent = {
         stream: null,
         muted: false,
         hasAudio: false,
-        hasVideo: false
+        hasVideo: false,
+        isConnected: false
       };
       this.pcs.push(pcObject);
 
@@ -418,6 +419,7 @@ let ChatComponent = {
           this.stream.getTracks().forEach(track => track.stop());
           this.stream = null;
         }
+        pcObject.isConnected = false;
       }
       pc.onicecandidate = event => {
         this.socket.emit('iceCandidate', sid, id, event.candidate);
@@ -438,6 +440,7 @@ let ChatComponent = {
                 this.socket.emit('sendNotification', sid, 'Oops! ' + name + ' just ended the call.', { errorCode: 1 });
               } else if(answer.success) {
                 pc.setRemoteDescription(answer.answer);
+                pcObject.isConnected = true;
               } else if(pc.iceConnectionState !== 'closed') {
                 this.notifications.unshift(new SimpleNotification(answer.error));
                 this.disconnect(pcObject);
@@ -454,6 +457,7 @@ let ChatComponent = {
         })
           .then(answer => {
             pc.setLocalDescription(answer);
+            pcObject.isConnected = true;
             cb({ success: true, answer: answer });
           });
       };
